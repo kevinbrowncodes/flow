@@ -1,0 +1,114 @@
+/*
+ * Design tokens — EPIC-001
+ *
+ * Every value here is MEASURED from the live Google Flow editor.
+ * Sources: docs/recon/results/RECON-02-fingerprint.md, RECON-03-tokens.md, RECON-04-editor-mvp.md
+ *
+ * Do not substitute tidier numbers. Radii in particular are seven arbitrary values,
+ * not a scale — a 17px tile rendered at 16px is a visible, diffable error.
+ *
+ * STORY-100 seeds this file. STORY-101 completes it.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* ---- The tint ladder -------------------------------------------------
+   * RECON-03: rgb(218,220,224) at seven opacities is nearly the entire
+   * palette on top of pure black. One channel triplet, six derived steps.
+   */
+  --tint: 218 220 224;
+
+  --tint-fill: rgb(var(--tint) / 0.05);   /* surface fill, borders, popover ring */
+  --tint-line: rgb(var(--tint) / 0.1);    /* tile outline, search fill */
+  --tint-hover: rgb(var(--tint) / 0.15);  /* NOT the rail — see RECON-05 C1 */
+  --tint-active: rgb(var(--tint) / 0.25); /* rail active, disabled content */
+  --tint-muted: rgb(var(--tint) / 0.5);   /* metadata text */
+  --tint-label: rgb(var(--tint) / 0.75);  /* chip + Agent label text */
+
+  /* ---- Surfaces -------------------------------------------------------- */
+  --surface-page: rgb(0 0 0);
+  --surface-glass: rgb(22 23 24 / 0.9);   /* composer and popovers */
+
+  /* ---- Text ------------------------------------------------------------ */
+  --text-primary: rgb(255 255 255);
+  --text-secondary: rgb(232 234 237);
+  --text-muted: var(--tint-muted);
+  --text-label: var(--tint-label);
+  --text-footer: rgb(154 160 166);
+  --text-disabled: var(--tint-active);
+
+  /* ---- Accent & status -------------------------------------------------- */
+  --accent-bg: rgb(255 255 255);
+  --accent-fg: rgb(48 48 48);
+  --accent-bg-hover: rgb(var(--tint) / 0.9);  /* RECON-05 §4: dims, and… */
+  --accent-fg-hover: rgb(255 255 255);        /* …the icon INVERTS to white */
+  --destructive: rgb(254 110 110);
+
+  /* ---- Typography ------------------------------------------------------- */
+  /* V1: Google Sans Text is proprietary. Substitute is tuned in STORY-403. */
+  /* V1 substitute for the proprietary "Google Sans Text". DM Sans is the
+   * closest freely-licensed face; size-adjust tuning tracked in STORY-403. */
+  --font-ui: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ---- Glass ------------------------------------------------------------ */
+  --blur-input: 80px;   /* composer, search, tile hover toolbar */
+  --blur-menu: 40px;    /* popovers */
+
+  /* ---- Motion ----------------------------------------------------------- */
+  --dur-fast: 100ms;    /* control hovers */
+  --dur-base: 200ms;    /* tile, search, popover mount */
+  --dur-slow: 400ms;    /* rail expand, scroll mask */
+  --ease: ease-in-out;
+  --ease-pop: cubic-bezier(0.16, 1, 0.3, 1);  /* RECON-05 §7, popover slideUp */
+
+  /* ---- Radii — MEASURED, NOT A SCALE (RECON-03) --------------------------
+   * Seven arbitrary values. Do not normalise: a 17px tile rendered at 16px
+   * is a visible, diffable error. */
+  --radius-action: 10px;      /* download/undo/delete icon buttons */
+  --radius-hover-toolbar: 12px;
+  --radius-chip: 15px;
+  --radius-field: 16px;       /* search field AND rail item pill */
+  --radius-tile: 17px;
+  --radius-popover: 18px;
+  --radius-composer: 24px;
+  --radius-pill: 9999px;
+
+  /* ---- Shadows (verbatim, RECON-03) ------------------------------------- */
+  --shadow-composer: 0 16px 32px -8px rgb(0 0 0 / 0.4);
+  --shadow-popover: inset 0 0 0 1px rgb(var(--tint) / 0.05), 0 16px 32px -8px rgb(0 0 0 / 0.6);
+
+  /* ---- Geometry (RECON-02/04) ------------------------------------------- */
+  --header-height: 76px;
+  --grid-gap: 16px;
+  --rail-collapsed: 64px;
+  --rail-expanded: 228px;
+  --rail-item-height: 48px;
+  --rail-gap: 4.8px;           /* measured — likely authored as 0.3rem */
+  --search-height: 40px;
+  --tile-height: 201px;        /* tiles size from ROW HEIGHT × aspect (RECON-05 §9) */
+  --details-width: 400px;
+  --composer-width: 600px;
+  --composer-min-height: 94px;
+  --composer-max-height: 460px; /* RECON-05 §10 */
+  --composer-bottom: 32px;
+  --mask-height: 92px;
+
+  /* ---- Scroll-fade mask (verbatim, RECON-03) ----------------------------- */
+  --mask-gradient: linear-gradient(
+    #000 0%, #000 60%, rgb(0 0 0 / 0.8) 80%, rgb(0 0 0 / 0.4) 90%,
+    rgb(0 0 0 / 0.2) 95%, rgb(0 0 0 / 0.1) 97%, transparent 100%
+  );
+}
+
+/* ---- Type roles (RECON-03 type ramp) ------------------------------------
+ * letter-spacing is normal on EVERY role — no tracking anywhere.
+ * 11/12/13/14/16 px, weights 400/500 only. */
+.type-title    { font-size: 16px; font-weight: 400; line-height: 24px; }
+.type-search   { font-size: 16px; font-weight: 500; line-height: 20px; }
+.type-input    { font-size: 14px; font-weight: 400; line-height: 20px; } /* composer, RECON-05 C2 */
+.type-nav      { font-size: 14px; font-weight: 500; line-height: 20px; }
+.type-caption  { font-size: 13px; font-weight: 500; line-height: 16px; }
+.type-body     { font-size: 12px; font-weight: 400; line-height: 16px; }
+.type-meta     { font-size: 12px; font-weight: 500; line-height: 16px; }
+.type-label    { font-size: 11px; font-weight: 500; line-height: 16px; }

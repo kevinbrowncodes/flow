@@ -1,0 +1,86 @@
+/* Shared layout for the View Settings + Filters popover contents. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--text-muted);
+}
+
+.segmented {
+  display: flex;
+  gap: 4px;
+}
+
+.segment {
+  flex: 1;
+  height: 30px;
+  border: 0;
+  border-radius: var(--radius-action);
+  background: var(--tint-fill);
+  color: var(--text-label);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.segment:hover { background: var(--tint-line); }
+
+.segmentOn {
+  background: var(--tint-active); /* matches the rail's active treatment */
+  color: var(--text-primary);
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.clear {
+  border: 0;
+  background: transparent;
+  color: var(--text-label);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Free-form fields a real backend may declare (number / text). */
+.input {
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-action);
+  background: var(--tint-fill);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  outline: none;
+}
+
+.input:focus { background: var(--tint-line); }

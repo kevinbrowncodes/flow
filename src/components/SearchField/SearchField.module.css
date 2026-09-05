@@ -1,0 +1,37 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: var(--search-height); /* 40px */
+  padding: 0 10px;
+  border: 1px solid var(--tint-fill);
+  border-radius: var(--radius-field);
+  background: var(--tint-line);
+  -webkit-backdrop-filter: blur(var(--blur-input));
+  backdrop-filter: blur(var(--blur-input));
+  /* RECON-03: focus brightens the border — no ring. */
+  transition: border-color var(--dur-base) var(--ease);
+}
+
+.pill:focus-within {
+  border-color: var(--tint-active); /* EST: target shade unmeasured */
+}
+
+.pill :global(.material-symbols-outlined) {
+  font-size: 20px;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+.input {
+  width: 370px;  /* RECON-04 §3 */
+  height: 38px;
+  padding: 10px 16px 10px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+}

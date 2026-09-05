@@ -1,0 +1,35 @@
+/*
+ * Global reset — deliberately minimal.
+ * Anything visual belongs in tokens.css or a *.module.css file.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* RECON-02: Flow uses a fixed-viewport app shell. Scrolling happens in a
+ * single inner container, never on the document. STORY-201 builds that. */
+html,
+body {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* V5 (deviation register): Flow removes ALL focus outlines. We add a
+ * keyboard-only ring — invisible to mouse users, so the visual clone is
+ * unchanged. Applied per the epic's recommendation, pending Kevin's sign-off. */
+:focus-visible {
+  outline: 1px solid rgb(var(--tint) / 0.5);
+  outline-offset: 2px;
+}

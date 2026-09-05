@@ -1,0 +1,53 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.panel {
+  position: absolute;
+  z-index: 40;
+  min-width: 160px;
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: blur(var(--blur-menu));
+  backdrop-filter: blur(var(--blur-menu));
+  border-radius: var(--radius-popover);
+  padding: 8px;
+  box-shadow: var(--shadow-popover);
+  /* RECON-05 §7: keyframes MOUNT animation; no close animation exists. */
+  animation: slideUp var(--dur-base) var(--ease-pop);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.down { top: calc(100% + 8px); }
+.up { bottom: calc(100% + 8px); }
+.start { left: 0; }
+.end { right: 0; }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 34px; /* RECON-03: menu row height */
+  padding: 8px 18px 8px 8px;
+  border: 0;
+  border-radius: var(--radius-action); /* EST: item radius unmeasured */
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.item:hover { background: var(--tint-hover); } /* EST */
+
+.destructive { color: var(--destructive); }
+
+.item :global(.material-symbols-outlined) { font-size: 18px; }

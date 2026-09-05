@@ -1,0 +1,125 @@
+.page {
+  position: relative;
+  display: flex;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--surface-page);
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+/* The ONLY scroll container on the page (RECON-04 §1). */
+.scroller {
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--mask-height) 8px 180px 16px; /* left 16 / right 8 — asymmetric, measured */
+}
+
+/* Black overlay strip masked by Flow's verbatim gradient — fades content as it
+ * scrolls under the transparent top bar; animates 400ms (RECON-03). */
+.scrollFade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--mask-height); /* 92px */
+  z-index: 10;
+  background: var(--surface-page);
+  -webkit-mask-image: var(--mask-gradient);
+  mask-image: var(--mask-gradient);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease), visibility var(--dur-slow) var(--ease);
+}
+
+.scrollFadeOn { opacity: 1; }
+
+/* Grid view (View Mode: Grid): flat wrap of tiles, no details columns. */
+.gridView {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--grid-gap);
+  align-content: flex-start;
+}
+
+/* Empty state (RECON-04 §9): one centered line, no illustration. */
+.empty {
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.footer {
+  position: absolute;
+  left: 16px;
+  bottom: 8px;
+  z-index: 20;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--text-footer);
+  pointer-events: none;
+}
+
+.loading {
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Gateway unreachable / protocol mismatch. Plain and readable; not a Flow surface. */
+.fatal {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 0 32px;
+}
+
+.fatalTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.fatalBody {
+  margin: 0;
+  max-width: 560px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.fatalRetry {
+  margin-top: 8px;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-action);
+  background: var(--tint-active);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}

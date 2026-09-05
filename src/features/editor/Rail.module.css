@@ -1,0 +1,75 @@
+.rail {
+  flex-shrink: 0;
+  width: var(--rail-expanded);
+  height: 100%;
+  padding: var(--header-height) 0 12px 16px; /* 76px top clears the bar (RECON-04 §1) */
+  display: flex;
+  flex-direction: column;
+  gap: var(--rail-gap); /* 4.8px (RECON-02) */
+  /* RECON-03: expand/collapse at 400ms ease-in-out */
+  transition: width var(--dur-slow) var(--ease), padding-top var(--dur-slow) var(--ease);
+  overflow: hidden;
+}
+
+.collapsed { width: var(--rail-collapsed); }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 212px;
+  height: var(--rail-item-height);
+  padding: 4px;
+  border: 0;
+  border-radius: var(--radius-field); /* 16px */
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 14px; /* RECON-03 type ramp; RECON-04 read 11px — TODO(verify) */
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  /* RECON-05 C1: rail items have NO hover background — only color transitions. */
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.collapsed .item { width: 48px; }
+
+.active {
+  background: var(--tint-active);
+  color: var(--text-primary);
+}
+
+.inert { cursor: default; }
+
+.iconChip {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label {
+  opacity: 1;
+  transition: opacity var(--dur-slow) var(--ease);
+}
+
+.collapsed .label { opacity: 0; }
+
+/* 1px-tall div at 35% element opacity — no border (RECON-05 §8) */
+.separator {
+  flex-shrink: 0;
+  width: 212px;
+  height: 1px;
+  margin: 8px 0; /* EST */
+  background: rgb(232 234 237);
+  opacity: 0.35;
+  transition: width var(--dur-slow) var(--ease);
+}
+
+.collapsed .separator { width: 32px; }
+
+.spacer { flex: 1; }

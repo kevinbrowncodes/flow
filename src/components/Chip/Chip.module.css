@@ -1,0 +1,31 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px; /* EST: fits the 94px composer's 40px control row */
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-chip);
+  background: var(--tint-fill);
+  color: var(--text-label);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    filter var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.chip:hover { background: var(--tint-line); } /* EST */
+
+.chip :global(.material-symbols-outlined) { font-size: 16px; }
+
+/* Agent pill toggled on fills white (RECON-04 §7) — deferred D6, kept for parity. */
+.on {
+  background: var(--accent-bg);
+  color: var(--accent-fg);
+}

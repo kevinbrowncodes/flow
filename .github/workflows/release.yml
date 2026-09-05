@@ -1,0 +1,60 @@
+name: release
+
+# Tag vX.Y.Z → lint, unit tests, protocol tests, builds, then:
+#   - GitHub Release with flow-ui-vX.Y.Z.tar.gz (the standalone bundle Python hosts mount)
+#   - npm publish to GitHub Packages (for React hosts)
+# Consumers pin the tag for both the tarball and `flow-protocol`.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: '@kevinbrowncodes'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e "protocol/python[dev]"
+      - run: pytest -q
+        working-directory: protocol/python
+
+      - name: Version check
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          PY=$(grep -E '^version *= *"' protocol/python/pyproject.toml | sed -E 's/.*"(.*)".*/\1/')
+          if [ "$TAG" != "$PKG" ] || [ "$TAG" != "$PY" ]; then
+            echo "tag $TAG, package.json $PKG, pyproject $PY must match"; exit 1
+          fi
+
+      - run: npm run build:all
+      - name: Pack the standalone bundle
+        run: |
+          rm -rf dist/lib
+          tar -czf "flow-ui-${GITHUB_REF_NAME}.tar.gz" -C dist .
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: flow-ui-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
+
+      - run: npm run build:lib
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,42 @@
+.btn {
+  /* Component-scoped vars, Flow-style (RECON-02). */
+  --btn-size: 40px;
+  --btn-radius: var(--radius-pill);
+  --btn-icon: 24px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--btn-size);
+  height: var(--btn-size);
+  padding: 0;
+  border: 0;
+  border-radius: var(--btn-radius);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  /* RECON-03: all 100ms ease-in-out on these exact properties */
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    filter var(--dur-fast) var(--ease),
+    backdrop-filter var(--dur-fast) var(--ease);
+}
+
+/* EST: hover shade for chrome icon buttons was not individually measured. */
+.btn:hover:not(:disabled) {
+  background-color: var(--tint-hover);
+}
+
+.btn:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+/* The download/undo/delete cluster: 32px, radius 10, padding 6 (RECON-03). */
+.action {
+  --btn-size: 32px;
+  --btn-radius: var(--radius-action);
+  --btn-icon: 20px;
+}
