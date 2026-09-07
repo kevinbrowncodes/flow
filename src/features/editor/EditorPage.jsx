@@ -6,6 +6,7 @@ import Rail from './Rail.jsx'
 import TopBar from './TopBar.jsx'
 import BatchBlock, { MediaTile } from './BatchBlock.jsx'
 import Composer from './Composer.jsx'
+import AgentPanel from '../agent/AgentPanel.jsx'
 import styles from './EditorPage.module.css'
 
 /* Grid view tile heights by size (RECON-04 §4; S/M measured EST, L EST). */
@@ -31,6 +32,7 @@ export default function EditorPage() {
   const [state, dispatch, actions] = useEditorState(projectId)
   const scrollerRef = useRef(null)
   const [scrolled, setScrolled] = useState(false)
+  const [agentPanel, setAgentPanel] = useState({ open: false, runId: null }) // STORY-603
 
   useEffect(() => {
     let live = true
@@ -125,7 +127,27 @@ export default function EditorPage() {
         onGenerate={actions.generate}
         clearOnSubmit={state.view.clearPromptOnSubmit}
         notice={state.notice}
+        agent={state.agent}
+        onAgentToggle={() => dispatch({ type: 'AGENT_TOGGLE' })}
+        onAgentSet={(key, value, range) => dispatch({ type: 'AGENT_SET', key, value, ...(range ?? {}) })}
+        onAgentInstruction={(i) => dispatch({ type: 'AGENT_INSTRUCTION', id: i.id, countLocked: i.count_locked })}
+        onAgentRun={async () => {
+          const run = await actions.agentRun()
+          if (run) setAgentPanel({ open: true, runId: run.id })
+          return Boolean(run)
+        }}
+        onAgentExpand={() => setAgentPanel((p) => ({ ...p, open: true }))}
       />
+
+      {agentPanel.open && caps.agent && (
+        <AgentPanel
+          caps={caps}
+          projectId={projectId}
+          runId={agentPanel.runId}
+          onClose={() => setAgentPanel((p) => ({ ...p, open: false }))}
+          onNewRun={() => setAgentPanel((p) => ({ ...p, open: false }))}
+        />
+      )}
 
       <footer className={styles.footer}>{caps.strings.footer ?? `${caps.name} can make mistakes, so double check it`}</footer>
     </div>
