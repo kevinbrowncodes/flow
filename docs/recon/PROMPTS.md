@@ -12,7 +12,7 @@ come first, post-MVP ones last.
 | **RECON-05** | States, motion & micro-interactions | before Phase 4 | STORY-401 (motion) |
 | **RECON-06** | Accessibility | before Phase 4 | STORY-402 (a11y) |
 | **RECON-07** | Home header & app shell | ⏸ post-MVP | post-MVP home |
-| **RECON-08** | Project gallery / home | ⏸ post-MVP | post-MVP home |
+| **RECON-08** | Project gallery / home | ✅ 2026-09-07 | STORY-208 |
 | **RECON-09** | Media editor & timeline | ⏸ post-MVP | post-MVP media editor |
 
 <details>
@@ -523,3 +523,62 @@ Paste results back. I will:
 1. File them under `docs/recon/results/`.
 2. Lock the surface inventory in `EPIC-001` §5.
 3. Write `docs/stories/STORY-1xx…` with real acceptance criteria and measured values baked in.
+
+---
+
+## RECON-10 — Agent mode  ·  🔜 requested 2026-09-07
+
+**Why this one is different.** Every other mission documents *appearance*. This one documents
+*behaviour*: what the agent can be asked, what it answers, and whether it generates on its own.
+The pill's geometry is already measured (RECON-04 §7) — do not re-measure it. Answer the
+behaviour questions even if the visual ones are quick.
+
+**Before you start:** open a project that already has clips in it, so the agent has context to
+work with, and be prepared to let it actually run at least once.
+
+```text
+Document Google Flow's **Agent mode** — the "Agent" pill in the prompt bar — so it can be
+rebuilt. I care much more about what it DOES than what it looks like.
+
+Turn it on and report, in this order:
+
+WHAT CHANGES ON SCREEN
+- Everything that appears, disappears or moves when the pill is toggled on, and again when it is
+  toggled off. I already know the pill fills white and the model chip disappears — confirm that
+  and list what else changes.
+- The two new controls that appear next to it (one looks like a media icon, one like
+  tune/sliders): open each, and list every option inside with exact labels and defaults.
+- The fullscreen-expand icon at the composer's top-right: what does the expanded view look like?
+  Full page or overlay? What is in it that is not in the collapsed composer? Screenshot it.
+- Does the input change (placeholder text, size, multi-line, attachments allowed)?
+
+WHAT IT ACTUALLY DOES — the important part
+- Ask it something real, e.g. "make me a 3-shot sequence of a car driving into a tunnel at dusk".
+  Paste its FULL reply verbatim.
+- Does it reply in prose, a plan, a list of shots, or something structured? Does it ask
+  clarifying questions before doing anything?
+- Does it generate media itself, or only propose and wait for you to approve? If it generates:
+  how many clips, do they appear as normal tiles/batches in the same grid, and is the prompt it
+  used for each one visible anywhere?
+- Can you correct it mid-conversation ("make shot 2 slower") and does it revise rather than start
+  over? Try it and paste what happens.
+- Can you attach a reference image or an existing clip to an agent turn? How?
+- Does it use the output settings (aspect, model, count) or override them?
+
+THE CONVERSATION ITSELF
+- Is there a visible transcript? Where does it live — in the composer, a side panel, the grid?
+- Does the conversation persist if you reload the page? If you leave the project and come back?
+  Is it per-project or global?
+- Can you have more than one conversation? Start a new one? Delete one?
+- Is there any indication of which model answers (a name, a badge, a settings entry)?
+
+LIMITS AND FAILURES
+- What does it cost in credits, if it says?
+- What happens if you ask for something it cannot do? Paste the refusal or error verbatim.
+- Is there a rate limit, a turn limit, or a spinner/streaming indicator while it thinks? Does the
+  reply stream token by token or arrive at once?
+
+Verbatim text matters everywhere — do not paraphrase its replies. UNKNOWN where unsure.
+Screenshots: pill off, pill on, each new control open, the expanded view, and the conversation
+mid-reply.
+```

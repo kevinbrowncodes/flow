@@ -16,6 +16,7 @@ Missions are numbered in **execution order**. Run top to bottom.
 | RECON-07 | Home header & app shell | ⏸ post-MVP | home page | — |
 | RECON-08 | Project gallery / home | ✅ 2026-09-07 | STORY-208 | `results/RECON-08-project-gallery.md` |
 | RECON-09 | Media editor & timeline | ⏸ post-MVP | media editor | — |
+| RECON-10 | **Agent mode — behaviour** | 🔜 requested 2026-09-07 | agent epic | — |
 
 **02 → 03 → 04 unblocks every MVP story.** 05 and 06 can lag until Phase 4.
 07/08/09 are for the end-of-epic discussion, not the MVP.
