@@ -81,7 +81,7 @@
 
 /* Agent mode: the expand icon at the composer's top-right (RECON-10 §1). Position EST. */
 .composer { position: relative; }
-.expand { position: absolute; top: 6px; right: 6px; }
+.expand { position: absolute; top: 6px; right: 6px; z-index: 1; } /* above .inputScroll (BUG-001) */
 
 .refChip {
   width: 28px;

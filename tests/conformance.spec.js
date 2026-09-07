@@ -386,5 +386,8 @@ test.describe('Part D — Agent mode [RECON-04 §7, RECON-10, STORY-602..604]', 
     await expect(panel.getByText('Done')).toBeVisible()
     await page.getByRole('button', { name: 'Close' }).click()
     await expect(panel).toHaveCount(0)
+    // BUG-001: the Expand icon must actually receive a click (it sat under the prompt editor)
+    await page.getByRole('button', { name: 'Expand', exact: true }).click({ timeout: 5000 })
+    await expect(panel).toBeVisible()
   })
 })
