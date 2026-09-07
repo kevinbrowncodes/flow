@@ -89,3 +89,13 @@ protocol/         PROTOCOL.md · python/ (flow-protocol package, reference gatew
 docs/             epics, stories, recon — EPIC-001 is the spec; EPIC-002 is this refactor
 tests/            conformance.spec.js (pixels) · gateway.spec.js (e2e) · unit/ (node --test)
 ```
+
+## Agent mode (v1.1, additive)
+
+A backend that declares `capabilities.agent` gets a live Agent pill: pick one of
+its **instructions** (skills), a clip count, attach a seed, press → — the
+backend writes every clip's script, the panel shows them for **review**
+(edit, rewrite one, approve), and the run renders clip by clip as a batch of
+tiles in the grid. One-shot, not conversational: see `protocol/PROTOCOL.md`
+§Agent mode and `docs/epics/EPIC-003-agent-mode.md`. The mock adapter and
+`flow-fake-gateway` implement it without a GPU.

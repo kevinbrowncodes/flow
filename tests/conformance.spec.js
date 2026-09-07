@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { PROJECT_URL, HOME_URL, GEOMETRY, HOME, COLORS, SHAPE, MOTION, TEXT } from './recon-values.js'
+import { PROJECT_URL, HOME_URL, GEOMETRY, HOME, AGENT, COLORS, SHAPE, MOTION, TEXT } from './recon-values.js'
 
 const box = (l) => l.boundingBox()
 const style = (l, prop) => l.evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop)
@@ -283,5 +283,108 @@ test.describe('Part C — projects home [RECON-08 / STORY-208]', () => {
     expect(await style(empty, 'color')).toBe('rgba(218, 220, 224, 0.5)')
     await expect(page.locator('img, svg')).toHaveCount(0) // no illustration
     await expect(page.getByRole('button', { name: 'New project' })).toBeVisible()
+  })
+})
+
+
+test.describe('Part D — Agent mode [RECON-04 §7, RECON-10, STORY-602..604]', () => {
+  const pill = (page) => page.getByRole('button', { name: 'Agent', exact: true })
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(PROJECT_URL)
+    await page.waitForSelector('section')
+  })
+
+  test('pill: off tint, on white (also under hover), model chip hides, controls appear and reverse', async ({ page }) => {
+    const p = pill(page)
+    expect(await style(p, 'background-color')).toBe(AGENT.pillOff)
+    expect(await style(p, 'border-radius')).toBe(AGENT.pillRadius)
+    expect(await p.getAttribute('aria-pressed')).toBe('false')
+    await expect(page.getByRole('button', { name: 'Output settings' })).toHaveCount(1)
+    for (const n of AGENT.controls) await expect(page.getByRole('button', { name: n, exact: true })).toHaveCount(0)
+
+    await p.click()
+    // the chip's background transitions over --dur-fast; wait it out like Part C does
+    await expect(async () => expect(await style(p, 'background-color')).toBe(AGENT.pillOn)).toPass()
+    await p.hover()
+    await expect(async () => expect(await style(p, 'background-color')).toBe(AGENT.pillOn)).toPass()
+    expect(await p.getAttribute('aria-pressed')).toBe('true')
+    await expect(page.getByRole('button', { name: 'Output settings' })).toHaveCount(0)
+    for (const n of AGENT.controls) await expect(page.getByRole('button', { name: n, exact: true })).toHaveCount(1)
+
+    await p.click()
+    await expect(async () => expect(await style(p, 'background-color')).not.toBe(AGENT.pillOn)).toPass()
+    await expect(page.getByRole('button', { name: 'Output settings' })).toHaveCount(1)
+    for (const n of AGENT.controls) await expect(page.getByRole('button', { name: n, exact: true })).toHaveCount(0)
+  })
+
+  test('instruction picker and agent settings', async ({ page }) => {
+    await pill(page).click()
+    await page.getByRole('button', { name: 'Agent instructions', exact: true }).click()
+    const picker = page.getByTestId('instruction-picker')
+    await expect(picker.getByRole('radio')).toHaveCount(2)
+    await expect(picker.getByText('1 clip')).toHaveCount(1)
+    await picker.getByRole('radio', { name: /mock-single/ }).click()
+
+    await page.getByRole('button', { name: 'Agent settings', exact: true }).click()
+    const settings = page.getByTestId('agent-settings')
+    await expect(settings.getByRole('radio', { name: 'Always', exact: true })).toHaveAttribute('aria-checked', 'true')
+    await expect(settings.getByText(/this skill writes one clip/)).toBeVisible()
+    await expect(settings.getByRole('radiogroup', { name: 'Clips' }).getByRole('radio')).toHaveCount(6)
+    await expect(settings.getByRole('radio', { name: '1', exact: true })).toHaveAttribute('aria-checked', 'true')
+    await settings.getByRole('radio', { name: 'Never', exact: true }).click()
+    await settings.getByRole('button', { name: 'Save' }).click()
+    await expect(settings).toHaveCount(0)
+  })
+
+  test('send needs a seed even when the backend does not, and a skill', async ({ page }) => {
+    await pill(page).click()
+    const send = page.getByRole('button', { name: 'Generate', exact: true })
+    await expect(send).toHaveAttribute('aria-disabled', 'true')
+    await page.getByRole('button', { name: 'Agent instructions', exact: true }).click()
+    await page.getByRole('radio', { name: /mock-scene/ }).click()
+    await expect(send).toHaveAttribute('aria-disabled', 'true')
+    await page.getByRole('button', { name: 'Add assets' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Add to Prompt' })
+    await dialog.locator('button').filter({ hasText: /ember|jpg|png/i }).first().click()
+    await dialog.getByRole('button', { name: 'Add to Prompt' }).click()
+    await expect(send).toHaveAttribute('aria-disabled', 'false')
+  })
+
+  test('a run: plan → review → rewrite → approve → done in the panel, and as a batch in the grid', async ({ page }) => {
+    const before = await page.locator('section').count()
+    await pill(page).click()
+    await page.getByRole('button', { name: 'Agent instructions', exact: true }).click()
+    await page.getByRole('radio', { name: /mock-scene/ }).click()
+    await page.getByRole('button', { name: 'Add assets' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Add to Prompt' })
+    await dialog.locator('button').filter({ hasText: /ember|jpg|png/i }).first().click()
+    await dialog.getByRole('button', { name: 'Add to Prompt' }).click()
+    await page.getByRole('button', { name: 'Generate', exact: true }).click()
+
+    const panel = page.getByTestId('agent-panel')
+    await expect(panel).toBeVisible()
+    expect((await box(panel)).width).toBe(AGENT.panelWidth)
+    await expect(page.getByTestId('run-step')).toContainText(AGENT.planningStep)
+    await expect(page.locator('section')).toHaveCount(before + 1)
+    const batch = page.locator('section').first()
+    await expect(batch.getByTestId('tile')).toHaveCount(3)
+
+    await expect(page.getByTestId('run-step')).toContainText('review', { timeout: 8000 })
+    await expect(page.getByTestId('script')).toHaveCount(3)
+    await page.getByRole('button', { name: 'Rewrite script 2' }).click()
+    await expect(page.getByRole('textbox', { name: 'Script 2' })).toHaveValue(/rewritten/)
+    await page.getByRole('button', { name: 'Approve' }).click()
+    await expect(page.getByTestId('run-step')).toContainText(/Queued|Rendering/)
+    await expect(batch.getByTestId('run-status')).toContainText(AGENT.deleteNote)
+    await expect(page.getByTestId('run-step')).toContainText('Done', { timeout: 60000 })
+    await expect(page.getByTestId('run-clips').locator('img')).toHaveCount(3)
+    await expect(batch.locator('img[class*="poster"]')).toHaveCount(3)
+    await expect(batch.getByTestId('run-status')).toHaveCount(0)
+
+    await page.getByRole('button', { name: 'Run history' }).click()
+    await expect(panel.getByText('Done')).toBeVisible()
+    await page.getByRole('button', { name: 'Close' }).click()
+    await expect(panel).toHaveCount(0)
   })
 })

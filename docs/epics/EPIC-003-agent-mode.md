@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📋 Planned 2026-09-07 — recon done (RECON-10), backend design decided in spark-cosmos3 EPIC_003, protocol surface and UI not started |
+| **Status** | 🟢 Built 2026-09-07 — STORY-601–605 done (protocol v1.1, pill/picker/settings, panel, runs-as-batches, Part D conformance 4/4; unit 59/59; protocol 14/14). Ships in `v0.2.0` — **tag pending (Kevin)**; spark-cosmos3 STORY_032 lands it |
 | **Owner** | Kevin Brown |
 | **Created** | 2026-09-07 |
 | **Predecessor** | EPIC-002 — Flow as a library (the seam this rides on); STORY-208 (projects home) |
@@ -103,12 +103,12 @@ STORY-601 gives it the protocol-shaped `/flow/agent/*` mirror. LTX declares
 
 | Story | Title | Depends on | Status |
 |---|---|---|---|
-| STORY-601 | Protocol v1.x agent surface: models, `FlowAgent`, router, conformance, fake agent | spark-cosmos3 STORY_030 proving the run model | 📋 |
-| STORY-602 | Agent pill ON state, instruction picker, agent settings (confirm, defaults) | RECON-04 §7, RECON-10 §1 | 📋 |
-| STORY-603 | The review view: editable scripts, Rewrite, titles, arc summary, Approve, "Writing N scripts…" step | 601 | 📋 |
-| STORY-604 | The run in the grid: N tiles filling in order, step labels, paused/failed/resume, run history | 601, 603 | 📋 |
-| STORY-605 | Conformance for agent mode against the mock (pill states, panel geometry, review flow) | 602–604 | 📋 |
-| STORY-606 | Release `v0.3.0`; spark-cosmos3 bumps `FLOW_VERSION` (their STORY_032) | 601–605 | 📋 |
+| STORY-601 | Protocol v1.x agent surface: models, `FlowAgent`, router, conformance, fake agent | spark-cosmos3 STORY_030 proving the run model | ✅ |
+| STORY-602 | Agent pill ON state, instruction picker, agent settings (confirm, defaults) | RECON-04 §7, RECON-10 §1 | ✅ |
+| STORY-603 | The review view: editable scripts, Rewrite, titles, arc summary, Approve, "Writing N scripts…" step | 601 | ✅ |
+| STORY-604 | The run in the grid: N tiles filling in order, step labels, paused/failed/resume, run history | 601, 603 | ✅ |
+| STORY-605 | Conformance for agent mode against the mock (pill states, panel geometry, review flow) | 602–604 | ✅ |
+| STORY-606 | Release **`v0.2.0`** (never tagged for 208, so Agent mode rides along); spark-cosmos3 bumps `FLOW_VERSION` (their STORY_032) | 601–605 | ✅ ready to tag |
 
 Stories land in order; 601 is written against the run model spark-cosmos3's
 STORY_030 lands first, so the protocol describes something that exists.

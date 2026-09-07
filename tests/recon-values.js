@@ -85,3 +85,14 @@ export const TEXT = {
   empty: 'Start creating or drop media', // RECON-04 §9 verbatim
   costLine: /^Generating will use \d+ credits$/, // RECON-04 §7 verbatim format
 }
+
+/** Agent mode (STORY-605). Pill from RECON-04 §7; structure from RECON-10 §1/§4; panel geometry EST. */
+export const AGENT = {
+  pillOff: 'rgba(218, 220, 224, 0.05)', // RECON-04 §7 tint/0.05
+  pillOn: 'rgb(255, 255, 255)', // RECON-04 §7 fills white
+  pillRadius: '15px', // RECON-04 §7
+  controls: ['Agent instructions', 'Agent settings', 'Expand'], // RECON-10 §1
+  planningStep: 'Writing 3 scripts…',
+  panelWidth: 420, // EST
+  deleteNote: 'Removing this batch does not stop the render.',
+}

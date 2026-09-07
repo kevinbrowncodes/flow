@@ -22,6 +22,8 @@
 | [STORY-602](STORY-602-agent-pill-picker-settings.md) | Agent pill ON state, instruction picker, agent settings | ✅ DONE — persisted per gateway; send gated on seed + skill |
 | [STORY-603](STORY-603-agent-review-view.md) | The agent panel: review, approve, watch, history | ✅ DONE — polls while the backend works; rewrite per script |
 | [STORY-604](STORY-604-runs-in-the-grid.md) | A run is a batch in the grid | ✅ DONE — `watchRun` mirrors clips into tiles; tombstones on delete; reconcile on load |
+| [STORY-605](STORY-605-agent-conformance.md) | Conformance for Agent mode | ✅ DONE — Part D, 4 tests on the mock |
+| [STORY-606](STORY-606-release.md) | Release `v0.2.0` with Agent mode | ✅ READY — tag at HEAD; versions already 0.2.0 |
 | **Phase 3 — MVP behavior** | | |
 | [STORY-303](STORY-303-output-settings.md) | Output settings popover | ✅ DONE — full matrix, live cost line |
 | [STORY-307](STORY-307-generation-lifecycle.md) | Generation lifecycle | ✅ DONE — prepend, skeleton + %, immediate details, delayed clear |
