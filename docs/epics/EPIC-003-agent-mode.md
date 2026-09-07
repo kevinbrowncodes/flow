@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 🟢 Built 2026-09-07 — STORY-601–605 done (protocol v1.1, pill/picker/settings, panel, runs-as-batches, Part D conformance 4/4; unit 59/59; protocol 14/14). Ships in `v0.2.0` — **tag pending (Kevin)**; spark-cosmos3 STORY_032 lands it |
+| **Status** | ✅ Shipped in `v0.2.0`, 2026-09-07 — STORY-601–606 done (protocol v1.1, pill/picker/settings, panel, runs-as-batches, Part D conformance 4/4; unit 59/59; protocol 14/14), plus BUG-001 (the Expand icon sat under the prompt editor). Consumed by spark-cosmos3 STORY_032, which drove a real agent run through the UI: plan → review → edit → rewrite → approve → rendered clip |
 | **Owner** | Kevin Brown |
 | **Created** | 2026-09-07 |
 | **Predecessor** | EPIC-002 — Flow as a library (the seam this rides on); STORY-208 (projects home) |
