@@ -103,11 +103,11 @@ Nothing else in the repo changes. There is no Node anywhere in it.
 | STORY-508 | Reference gateways for spark-cosmos3 and spark-ltx2 | ✅ written from their docs; **untested against the Spark** |
 | STORY-509 | Release workflow: tag → lint/test/build → GitHub Release tarball + npm publish | ✅ `.github/workflows/release.yml`, inert until pushed |
 | STORY-510 | End-to-end: release bundle behind the fake gateway, Playwright | ✅ `npm run conform:gateway` |
-| STORY-511 | Wire `Cosmos3Gateway` into spark-cosmos3, pin `v0.1.0`, run `--generate` conformance on the box | 📋 next |
+| STORY-511 | Wire `Cosmos3Gateway` into spark-cosmos3, pin `v0.1.0`, run `--generate` conformance on the box | ✅ spark-cosmos3 STORY_023–025 (2026-09-06); the `--generate` render is held on that box's memory gate |
 | STORY-512 | Same for spark-ltx2 (uploads must land in ComfyUI's input volume) | 📋 |
 | STORY-513 | Subset Material Symbols (STORY-405) — `flow.css` is 5.4 MB because lib mode inlines the font | 📋 |
 | STORY-514 | Optional `/flow/batches` so history follows the box, not the browser | 📋 backlog |
-| STORY-515 | Cosmos V2V: `reference_kinds: ["image","video"]` + `condition_seconds` field | 📋 backlog |
+| STORY-515 | Cosmos V2V: `reference_kinds: ["image","video"]` + `condition_seconds` field | ✅ spark-cosmos3 STORY_026 (2026-09-06) — done in the backend's forked gateway, not the example |
 
 ## 7. Risks and open points
 
