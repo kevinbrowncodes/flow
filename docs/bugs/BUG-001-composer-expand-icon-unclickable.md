@@ -1,6 +1,6 @@
 # BUG-001 — The composer's Expand icon cannot be clicked in Agent mode
 
-**Status:** Resolved 2026-09-07 (ships in v0.2.0)
+**Status:** Resolved 2026-09-07, shipped in v0.2.0
 **Found:** 2026-09-07, driving the Agent UI against a real gateway (spark-cosmos3 STORY_032) with headless Chromium
 **Affects:** `src/features/editor/Composer.jsx` / `Composer.module.css` (STORY-603, Agent mode only)
 
@@ -45,3 +45,5 @@ box spans the whole composer width — covers the icon.
 ## Resolution
 
 `.expand { z-index: 1 }`. Part D's run test now closes the panel and reopens it via the icon with an actionable click; without the CSS line that step fails with *"Prompt … intercepts pointer events"* (verified by stashing the fix), with it Part D passes 4/4.
+
+Confirmed in the published artefact: `flow-ui-v0.2.0.tar.gz` contains `._expand_d3zov_84{z-index:1;position:absolute;top:6px;right:6px}`.
