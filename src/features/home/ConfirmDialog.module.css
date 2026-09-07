@@ -1,0 +1,78 @@
+/* Confirmation dialog (RECON-08 §4). Google's exact dialog geometry was not
+   captured, so this borrows the measured popover surface — glass, 18px radius,
+   the same mount animation — rather than inventing a second visual language. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(0 0 0 / 0.6); /* EST — matches AssetPickerModal */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  width: 440px; /* EST */
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: blur(var(--blur-menu));
+  backdrop-filter: blur(var(--blur-menu));
+  border-radius: var(--radius-popover);
+  box-shadow: var(--shadow-popover);
+  padding: 24px;
+  animation: dialogIn var(--dur-base) var(--ease-pop);
+}
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.headline {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--text-primary);
+}
+
+.body {
+  margin: 0 0 24px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--text-muted);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.button {
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.button:hover {
+  background: var(--tint-fill);
+}
+
+.confirm {
+  background: var(--accent-bg);
+  color: var(--accent-fg);
+}
+
+.confirm:hover {
+  background: var(--accent-bg-hover);
+}

@@ -104,6 +104,11 @@
  * @typedef {Object} Adapter
  * @property {() => Promise<Capabilities>} capabilities
  * @property {() => Promise<string>} getDefaultProjectId
+ * @property {string} [gatewayUrl]                                 shown in About (STORY-208)
+ * @property {() => Promise<Object[]>} listProjects                 newest first (STORY-208)
+ * @property {() => Promise<Object>} createProject                  titled by `formatProjectTitle`
+ * @property {(id: string, title: string) => Promise<Object|null>} renameProject
+ * @property {(id: string) => Promise<void>} deleteProject          project + its batches; no media
  * @property {(id: string) => Promise<Object|null>} getProject
  * @property {(projectId: string) => Promise<Batch[]>} listBatches
  * @property {(mediaId: string, type?: 'FULL'|'THUMBNAIL') => string|null} getMediaUrl
@@ -263,7 +268,28 @@ export function describeBatch(caps, mode, values) {
   }
 }
 
-export const uuid = () => globalThis.crypto.randomUUID()
+/**
+ * RFC 4122 v4 id.
+ *
+ * `crypto.randomUUID` is **secure-context only** in browsers (https or
+ * localhost) and was not global in Node before 19. Calling it unguarded broke
+ * the editor over plain http on a LAN — the exact failure a self-hosted
+ * gateway produces — and this repo's own unit tests on Node 18.
+ * `getRandomValues` has neither restriction; the last fallback keeps ids
+ * flowing where no WebCrypto exists at all (ids are for local grouping, not
+ * for secrets).
+ */
+export function uuid() {
+  const c = globalThis.crypto
+  if (typeof c?.randomUUID === 'function') return c.randomUUID()
+  const b = new Uint8Array(16)
+  if (typeof c?.getRandomValues === 'function') c.getRandomValues(b)
+  else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256)
+  b[6] = (b[6] & 0x0f) | 0x40
+  b[8] = (b[8] & 0x3f) | 0x80
+  const h = [...b].map((x) => x.toString(16).padStart(2, '0')).join('')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
+}
 
 /** 'Aug 22, 2026' — the format the details column shows (RECON-04 §6). */
 export const formatCreatedAt = (d = new Date()) =>

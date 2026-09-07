@@ -1,31 +1,11 @@
-import { useEffect, useState } from 'react'
-import { BrowserRouter, HashRouter, MemoryRouter, Routes, Route, Navigate } from 'react-router'
+import { BrowserRouter, HashRouter, MemoryRouter, Routes, Route } from 'react-router'
 import { AdapterProvider } from './adapter/AdapterContext.jsx'
-import { useAdapter } from './adapter/useAdapter.js'
 import EditorPage from './features/editor/EditorPage.jsx'
+import HomePage from './features/home/HomePage.jsx'
 import KitchenSink from './features/kitchen/KitchenSink.jsx'
 import StubPage from './features/stubs/StubPage.jsx'
 
 const ROUTERS = { browser: BrowserRouter, hash: HashRouter, memory: MemoryRouter }
-
-function Home() {
-  const adapter = useAdapter()
-  const [id, setId] = useState(null)
-  const [error, setError] = useState(null)
-  useEffect(() => {
-    let live = true
-    adapter
-      .getDefaultProjectId()
-      .then((v) => live && setId(v))
-      .catch((e) => live && setError(e))
-    return () => {
-      live = false
-    }
-  }, [adapter])
-  if (error) return <div style={{ padding: 32, fontSize: 12 }}>{error.message}</div>
-  if (!id) return null
-  return <Navigate to={`/project/${id}`} replace />
-}
 
 /**
  * The whole editor as one component. Hand it an adapter and it runs.
@@ -42,7 +22,9 @@ export default function FlowEditor({ adapter, router = 'browser', basename = '',
     <AdapterProvider adapter={adapter}>
       <Router basename={basename || undefined}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* STORY-208: `/` is the project gallery. It used to resolve a
+              default project id and redirect straight into the editor. */}
+          <Route path="/" element={<HomePage />} />
           <Route path="/project/:projectId" element={<EditorPage />} />
           {/* Deferred surfaces (D6) — routes exist, pages are stubs */}
           <Route path="/project/:projectId/characters" element={<StubPage name="Characters" />} />

@@ -70,6 +70,7 @@
   --radius-chip: 15px;
   --radius-field: 16px;       /* search field AND rail item pill */
   --radius-tile: 17px;
+  --radius-card: 16px;        /* project card + its thumbnail (RECON-08 §3) */
   --radius-popover: 18px;
   --radius-composer: 24px;
   --radius-pill: 9999px;

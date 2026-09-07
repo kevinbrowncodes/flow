@@ -14,7 +14,7 @@ Missions are numbered in **execution order**. Run top to bottom.
 | RECON-06 | Accessibility | ⬜ before Phase 4 | STORY-402 | — |
 | 👤 **Manual hover check** | Kevin, 2 min | 🔜 **ONLY MVP BLOCKER** | STORY-301 | — |
 | RECON-07 | Home header & app shell | ⏸ post-MVP | home page | — |
-| RECON-08 | Project gallery / home | ⏸ post-MVP | home page | — |
+| RECON-08 | Project gallery / home | ✅ 2026-09-07 | STORY-208 | `results/RECON-08-project-gallery.md` |
 | RECON-09 | Media editor & timeline | ⏸ post-MVP | media editor | — |
 
 **02 → 03 → 04 unblocks every MVP story.** 05 and 06 can lag until Phase 4.

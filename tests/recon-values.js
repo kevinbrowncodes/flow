@@ -4,6 +4,33 @@
  * Do not "fix" a failing value here; fix the CSS.
  */
 export const PROJECT_URL = '/project/a88beb70-4eb5-454a-8e3e-51ec771e5419'
+export const HOME_URL = '/'
+
+/** RECON-08 — the projects home. Captured at 1796px; the suite runs at 1440,
+ *  so only width-independent values live here (the grid is `repeat(3, 1fr)`,
+ *  which is why the card width is derived, not asserted). */
+export const HOME = {
+  headerHeight: 80, // §1
+  headerPadding: '16px 24px', // §1
+  gridGap: 16, // §2
+  gridPadding: '0px 16px 16px 24px', // §2
+  columns: 3, // §2 — count is fixed, width is fluid
+  cardRadius: '16px', // §3
+  cardHover: 'rgba(218, 220, 224, 0.05)', // §4 --tint-fill
+  thumbEmpty: 'rgba(218, 220, 224, 0.15)', // §3 --tint-hover
+  thumbAspect: 1.77778, // §3 16/9
+  footerHeight: 42, // §3
+  footerPadding: '4px 16px', // §3
+  iconButton: 34, // §3
+  titleSize: '16px', // §3
+  titleLineHeight: '24px', // §3
+  newProjectWidth: 192, // §5
+  newProjectRadius: '32px', // §5
+  newProjectBottom: 56, // §5
+  newProjectBg: 'rgba(218, 220, 224, 0.25)', // §5 --tint-active
+  emptyCopy: 'No projects yet', // §6 — designed, not cloned (STORY-208)
+  deleteHeadline: 'Delete this project?', // §4, our copy
+}
 
 export const GEOMETRY = {
   headerHeight: 76, // RECON-02 --header-height

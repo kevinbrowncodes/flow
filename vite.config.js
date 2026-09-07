@@ -1,5 +1,9 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+
+/** Surfaced by the home page's About panel (STORY-208). */
+const version = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version
 
 /**
  * App build (dev server + standalone release bundle).
@@ -13,5 +17,6 @@ import react from '@vitejs/plugin-react'
  */
 export default defineConfig(({ command }) => ({
   plugins: [react()],
+  define: { __FLOW_VERSION__: JSON.stringify(version) },
   base: command === 'build' ? './' : '/',
 }))

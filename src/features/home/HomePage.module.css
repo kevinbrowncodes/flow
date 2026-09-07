@@ -1,0 +1,106 @@
+/* RECON-08 §1–§2, §5–§6 — the projects home. */
+
+.page {
+  min-height: 100dvh;
+  background: var(--surface-page);
+}
+
+/* §1: 80px, sticky, transparent, 16px 24px. The Google-only cluster
+   (Flow Music/TV, socials, ULTRA, avatar) is not rendered — see STORY-208. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 80px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+}
+
+.wordmark {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+/* §2: three fluid columns. The capture reported the COMPUTED 572px tracks;
+   at 1796px with an 8px scrollbar `repeat(3, 1fr)` measures back to 572. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 16px;
+  row-gap: 16px;
+  padding: 0 16px 16px 24px;
+}
+
+/* §6: designed, not cloned — the same treatment the editor's empty state uses
+   (STORY-207): one muted line, no illustration. */
+.empty {
+  display: grid;
+  place-content: center;
+  height: calc(100dvh - 80px);
+  font-size: 22px;
+  color: var(--tint-muted);
+}
+
+/* §5: fixed, centred, 56px above the bottom. Height is EST 48 — the captured
+   128px contradicts a 32px radius and 16px text (see STORY-208 deviations). */
+.newProject {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 56px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 192px;
+  height: 48px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 32px;
+  background: var(--tint-active);
+  color: var(--tint-label);
+  font-size: 16px;
+  font-weight: 400;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(var(--blur-menu));
+  backdrop-filter: blur(var(--blur-menu));
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.newProject:hover {
+  background: var(--tint-hover);
+  color: var(--text-primary);
+}
+
+.about {
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--text-muted);
+}
+
+.aboutRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.aboutValue {
+  color: var(--text-secondary);
+}
+
+.fatal {
+  padding: 32px;
+  font-size: 12px;
+  color: var(--text-muted);
+}

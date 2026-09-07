@@ -14,6 +14,17 @@ export const PROJECT = {
   createdAt: '2026-08-21T10:58:00',
 }
 
+/**
+ * Older, batch-less projects so the home grid (STORY-208) has something to lay
+ * out and shows the no-media thumbnail. Deliberately older than PROJECT, which
+ * must stay newest: `getDefaultProjectId` returns the newest, and the editor
+ * conformance suite expects to land on the populated one.
+ */
+export const OLDER_PROJECTS = [
+  { id: '1f8b1a24-9f1e-4a55-9f0a-2c6f4b7d1e33', title: 'Aug 20 at 09:14 AM', createdAt: '2026-08-20T09:14:00' },
+  { id: '6d2c5e91-3b7a-4c18-8e52-7a9f0d4c6b21', title: 'Aug 18 at 04:41 PM', createdAt: '2026-08-18T16:41:00' },
+]
+
 // assetKey → files under public/mock/
 const A = {
   lagoon: { full: '/mock/clip-lagoon.mp4', thumb: '/mock/clip-lagoon.jpg' },

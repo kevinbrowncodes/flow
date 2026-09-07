@@ -7,6 +7,7 @@
  * @property {() => Promise<Object[]>} listProjects
  * @property {(id: string) => Promise<Object|null>} getProject
  * @property {(project: Object) => Promise<void>} putProject
+ * @property {(id: string) => Promise<void>} deleteProject          drops the project AND its batches
  * @property {(projectId: string) => Promise<Object[]>} listBatches
  * @property {(projectId: string, batch: Object) => Promise<void>} putBatch   upsert; new batches go first
  * @property {(projectId: string, batchId: string) => Promise<void>} deleteBatch
@@ -28,6 +29,14 @@ function fromState(read, write) {
       const i = s.projects.findIndex((x) => x.id === project.id)
       if (i >= 0) s.projects[i] = clone(project)
       else s.projects.push(clone(project))
+      write(s)
+    },
+    async deleteProject(id) {
+      // The batches go with it — orphaned batches would leak storage forever
+      // and can never be reached again (STORY-208).
+      const s = read()
+      s.projects = s.projects.filter((x) => x.id !== id)
+      delete s.batches[id]
       write(s)
     },
     async listBatches(projectId) {

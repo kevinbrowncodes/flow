@@ -8,9 +8,9 @@
  * Media resolution mirrors Flow's real endpoint (RECON-02):
  *   media.getMediaUrlRedirect?name={uuid}&mediaUrlType=FULL|THUMBNAIL
  */
-import { PROJECT, BATCHES, ASSETS, MOCK_POOL } from './fixtures.js'
+import { PROJECT, OLDER_PROJECTS, BATCHES, ASSETS, MOCK_POOL } from './fixtures.js'
 import { MOCK_CAPABILITIES, estimateCost } from './outputSettings.js'
-import { assertCapabilities, buildPendingBatch, findMode, valueByRole, formatCreatedAt, applyPatch, uuid, ContractError } from '../adapter/contract.js'
+import { assertCapabilities, buildPendingBatch, findMode, valueByRole, formatCreatedAt, formatProjectTitle, applyPatch, uuid, ContractError } from '../adapter/contract.js'
 import { memoryStore } from '../adapter/store.js'
 
 /** RECON-04 §8: image ×2 batch took EST 20–30s end to end. */
@@ -24,14 +24,48 @@ const TICK_MS = 900
  */
 export function createMockAdapter({ generationMs = GENERATION_MS, tickMs = TICK_MS } = {}) {
   const caps = assertCapabilities(MOCK_CAPABILITIES)
-  const db = memoryStore({ projects: [PROJECT], batches: { [PROJECT.id]: BATCHES } })
+  const db = memoryStore({ projects: [PROJECT, ...OLDER_PROJECTS], batches: { [PROJECT.id]: BATCHES } })
   const uploads = new Map() // id → { full, thumb, name, kind }
   const pending = new Map() // batchId → { finalAssets, finalResolution, started }
   let genCount = 0
 
+  /** Named, not a method: the adapter is often destructured, so `this` is unsafe. */
+  async function createProject() {
+    const d = new Date()
+    const project = { id: uuid(), title: formatProjectTitle(d), createdAt: d.toISOString() }
+    await db.putProject(project)
+    return project
+  }
+
   return {
     capabilities: async () => caps,
-    getDefaultProjectId: async () => PROJECT.id,
+    createProject,
+    gatewayUrl: 'mock adapter (no gateway)',
+
+    async getDefaultProjectId() {
+      const projects = await db.listProjects()
+      if (projects.length) return projects[0].id
+      return (await createProject()).id
+    },
+
+    /** Newest first — the home grid's order (STORY-208). */
+    async listProjects() {
+      const projects = await db.listProjects()
+      return projects.slice().sort((a, b) => String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? '')))
+    },
+
+    async renameProject(id, title) {
+      const project = await db.getProject(id)
+      if (!project) return null
+      const next = String(title ?? '').trim()
+      if (!next) return project
+      const updated = { ...project, title: next }
+      await db.putProject(updated)
+      return updated
+    },
+
+    deleteProject: (id) => db.deleteProject(id),
+
     getProject: (id) => db.getProject(id),
     listBatches: (projectId) => db.listBatches(projectId),
     deleteBatch: (projectId, batchId) => db.deleteBatch(projectId, batchId),

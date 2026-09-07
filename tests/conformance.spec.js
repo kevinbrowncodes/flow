@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { PROJECT_URL, GEOMETRY, COLORS, SHAPE, MOTION, TEXT } from './recon-values.js'
+import { PROJECT_URL, HOME_URL, GEOMETRY, HOME, COLORS, SHAPE, MOTION, TEXT } from './recon-values.js'
 
 const box = (l) => l.boundingBox()
 const style = (l, prop) => l.evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop)
@@ -144,5 +144,144 @@ test.describe('Part B — self-baseline visual regression', () => {
     await page.waitForSelector('section')
     await page.waitForTimeout(600) // settle fonts/images
     await expect(page).toHaveScreenshot('editor-default.png', { maxDiffPixelRatio: 0.02 })
+  })
+})
+
+test.describe('Part C — projects home [RECON-08 / STORY-208]', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(HOME_URL)
+    await page.waitForSelector('[data-testid="projects-grid"]')
+  })
+
+  test('header: 80px, sticky, transparent, wordmark is the model name [§1]', async ({ page }) => {
+    const header = page.locator('header')
+    expect((await box(header)).height).toBe(HOME.headerHeight)
+    expect(await style(header, 'position')).toBe('sticky')
+    expect(await style(header, 'background-color')).toBe('rgba(0, 0, 0, 0)')
+    expect(await style(header, 'padding')).toBe(HOME.headerPadding)
+    // Google-only chrome is absent: no socials, no plan badge, no avatar.
+    for (const gone of ['Flow Music', 'Flow TV', 'ULTRA']) {
+      await expect(header.getByText(gone, { exact: true })).toHaveCount(0)
+    }
+    await expect(header.getByRole('button', { name: 'More options' })).toBeVisible()
+  })
+
+  test('grid: 3 fluid columns, 16px gaps, measured padding [§2]', async ({ page }) => {
+    const grid = page.locator('[data-testid="projects-grid"]')
+    const tracks = (await style(grid, 'grid-template-columns')).split(' ')
+    expect(tracks).toHaveLength(HOME.columns)
+    // Fluid: every track is the same width, and they fill the padded row.
+    const widths = tracks.map(parseFloat)
+    expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(1)
+    expect(await style(grid, 'column-gap')).toBe(`${HOME.gridGap}px`)
+    expect(await style(grid, 'row-gap')).toBe(`${HOME.gridGap}px`)
+    expect(await style(grid, 'padding')).toBe(HOME.gridPadding)
+    expect((await box(grid)).x).toBe(0) // grid spans the page; padding does the insetting
+  })
+
+  test('card: radius, 16/9 thumbnail, 42px footer, 34px icons [§3]', async ({ page }) => {
+    const card = page.locator('[data-testid="project-card"]').first()
+    expect(await style(card, 'border-radius')).toBe(HOME.cardRadius)
+    const thumb = card.getByRole('link', { name: 'Open project' })
+    expect(await style(thumb, 'border-radius')).toBe(HOME.cardRadius)
+    const tb = await box(thumb)
+    expect(tb.width / tb.height).toBeCloseTo(HOME.thumbAspect, 2)
+    expect(await style(thumb, 'overflow')).toBe('hidden')
+    const footer = card.locator('div').filter({ hasText: /.*/ }).last()
+    expect(await style(card.getByRole('button', { name: 'Delete project' }), 'width')).toBe(`${HOME.iconButton}px`)
+    expect(await style(card.getByText(/at \d/).first(), 'font-size')).toBe(HOME.titleSize)
+    expect(await style(card.getByText(/at \d/).first(), 'line-height')).toBe(HOME.titleLineHeight)
+    expect(footer).toBeTruthy()
+  })
+
+  test('card: icons hidden until hover, and on focus-within [§4]', async ({ page }) => {
+    const card = page.locator('[data-testid="project-card"]').first()
+    const trash = card.getByRole('button', { name: 'Delete project' })
+    expect(await style(trash, 'opacity')).toBe('0')
+    expect(await style(card, 'background-color')).toBe('rgba(0, 0, 0, 0)')
+
+    await card.hover()
+    await expect(async () => expect(await style(trash, 'opacity')).toBe('1')).toPass()
+    expect(await style(card, 'background-color')).toBe(HOME.cardHover)
+
+    // Keyboard reaches them too — the icons exist in the DOM at opacity 0.
+    await page.mouse.move(0, 0)
+    await trash.focus()
+    await expect(async () => expect(await style(trash, 'opacity')).toBe('1')).toPass()
+  })
+
+  test('empty project shows the flat placeholder, no image [§3]', async ({ page }) => {
+    // The fixtures carry two batch-less projects (OLDER_PROJECTS).
+    const empty = page.locator('[data-testid="project-card"]').last()
+    const thumb = empty.getByRole('link', { name: 'Open project' })
+    expect(await style(thumb, 'background-color')).toBe(HOME.thumbEmpty)
+    await expect(thumb.locator('img')).toHaveCount(0)
+  })
+
+  test('new project: fixed, centred, 56px up, and creates without a dialog [§5]', async ({ page }) => {
+    const btn = page.getByRole('button', { name: 'New project' })
+    expect(await style(btn, 'position')).toBe('fixed')
+    expect(await style(btn, 'border-radius')).toBe(HOME.newProjectRadius)
+    expect(await style(btn, 'background-color')).toBe(HOME.newProjectBg)
+    const b = await box(btn)
+    const viewport = page.viewportSize()
+    expect(b.width).toBe(HOME.newProjectWidth)
+    expect(Math.round(b.x + b.width / 2)).toBe(viewport.width / 2)
+    expect(Math.round(viewport.height - (b.y + b.height))).toBe(HOME.newProjectBottom)
+
+    await btn.click()
+    await expect(page).toHaveURL(/\/project\/[0-9a-f-]{36}$/) // straight in, no dialog
+  })
+
+  test('rename is inline, Enter commits and Escape restores [§4]', async ({ page }) => {
+    const card = page.locator('[data-testid="project-card"]').first()
+    const original = await card.getByText(/at \d/).first().innerText()
+    await card.hover()
+    await card.getByRole('button', { name: 'Edit project title' }).click()
+    const input = card.getByRole('textbox', { name: 'Project title' })
+    await expect(input).toBeFocused()
+    await input.fill('Beach scene')
+    await input.press('Enter')
+    await expect(card.getByText('Beach scene')).toBeVisible()
+
+    await card.getByRole('button', { name: 'Edit project title' }).click()
+    await card.getByRole('textbox', { name: 'Project title' }).fill('discarded')
+    await card.getByRole('textbox', { name: 'Project title' }).press('Escape')
+    await expect(card.getByText('Beach scene')).toBeVisible()
+    expect(original).not.toBe('Beach scene')
+  })
+
+  test('delete asks first, tells the truth about the clips, and Cancel keeps it [§4]', async ({ page }) => {
+    const before = await page.locator('[data-testid="project-card"]').count()
+    const card = page.locator('[data-testid="project-card"]').first()
+    await card.hover()
+    await card.getByRole('button', { name: 'Delete project' }).click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toContainText(HOME.deleteHeadline)
+    await expect(dialog).toContainText('The clips stay on the box')
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await expect(page.locator('[data-testid="project-card"]')).toHaveCount(before)
+
+    await card.hover()
+    await card.getByRole('button', { name: 'Delete project' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete project' }).click()
+    await expect(page.locator('[data-testid="project-card"]')).toHaveCount(before - 1)
+  })
+
+  test('empty state: one muted line, no illustration [§6]', async ({ page }) => {
+    const cards = page.locator('[data-testid="project-card"]')
+    for (let n = await cards.count(); n > 0; n--) {
+      await cards.first().hover()
+      await cards.first().getByRole('button', { name: 'Delete project' }).click()
+      await page.getByRole('dialog').getByRole('button', { name: 'Delete project' }).click()
+      await expect(cards).toHaveCount(n - 1)
+    }
+    const empty = page.getByText(HOME.emptyCopy)
+    await expect(empty).toBeVisible()
+    expect(await style(empty, 'font-size')).toBe('22px')
+    expect(await style(empty, 'color')).toBe('rgba(218, 220, 224, 0.5)')
+    await expect(page.locator('img, svg')).toHaveCount(0) // no illustration
+    await expect(page.getByRole('button', { name: 'New project' })).toBeVisible()
   })
 })

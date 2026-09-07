@@ -82,17 +82,48 @@ export function createHttpAdapter({ baseUrl = '', store, pollMs = 1000, fetch: f
     return capsPromise
   }
 
+  /** Named, not a method: the adapter is often destructured, so `this` is unsafe. */
+  async function createProject() {
+    const d = clock()
+    const project = { id: uuid(), title: formatProjectTitle(d), createdAt: d.toISOString() }
+    await db.putProject(project)
+    return project
+  }
+
   return {
     capabilities,
+    createProject,
+
+    /** What the About panel reports (STORY-208). '' means the page's own
+     *  origin, which is the usual self-hosted case. */
+    gatewayUrl: base || 'same origin',
 
     async getDefaultProjectId() {
       const projects = await db.listProjects()
       if (projects.length) return projects[0].id
-      const d = clock()
-      const project = { id: uuid(), title: formatProjectTitle(d), createdAt: d.toISOString() }
-      await db.putProject(project)
-      return project.id
+      return (await createProject()).id
     },
+
+    /** Newest first — the home grid's order (STORY-208). */
+    async listProjects() {
+      const projects = await db.listProjects()
+      return projects.slice().sort((a, b) => String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? '')))
+    },
+
+    /** Empty or whitespace-only titles are refused: the project keeps its name. */
+    async renameProject(id, title) {
+      const project = await db.getProject(id)
+      if (!project) return null
+      const next = String(title ?? '').trim()
+      if (!next) return project
+      const updated = { ...project, title: next }
+      await db.putProject(updated)
+      return updated
+    },
+
+    /** Removes the project and its batches. Media stays on the gateway — the
+     *  protocol has no delete, and the clips remain in the asset picker. */
+    deleteProject: (id) => db.deleteProject(id),
 
     getProject: (id) => db.getProject(id),
     listBatches: (projectId) => db.listBatches(projectId),
