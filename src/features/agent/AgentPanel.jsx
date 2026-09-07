@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAdapter } from '../../adapter/useAdapter.js'
 import Icon from '../../components/Icon/Icon.jsx'
 import IconButton from '../../components/IconButton/IconButton.jsx'
@@ -29,14 +29,13 @@ export default function AgentPanel({ caps, projectId, runId, onClose, onNewRun }
   const [busy, setBusy] = useState(null) // script index being rewritten
   const [errors, setErrors] = useState({}) // script index → message
   const [notice, setNotice] = useState(null)
-  const preferred = useRef(runId)
-  preferred.current = runId
 
+  // A new runId (a run just created) wins over whatever was showing; otherwise keep the current one.
   const refresh = useCallback(async () => {
     const list = await adapter.agent.listRuns(projectId)
     setRuns(list)
-    setCurrent((cur) => pickRun(list, cur?.id ?? preferred.current))
-  }, [adapter, projectId])
+    setCurrent((cur) => pickRun(list, runId ?? cur?.id))
+  }, [adapter, projectId, runId])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -49,7 +48,7 @@ export default function AgentPanel({ caps, projectId, runId, onClose, onNewRun }
     }
     load()
     return () => controller.abort()
-  }, [refresh, runId])
+  }, [refresh])
 
   // Poll the current run while the backend is doing something with it.
   useEffect(() => {

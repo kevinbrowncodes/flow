@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useRef, useMemo } from 'react'
 import { useAdapter } from '../../adapter/useAdapter.js'
 import { defaultValues, applyPatch, isPending, findMode, runFields } from '../../adapter/contract.js'
+import { isRunActiveBatch, isRunBatch } from '../../adapter/runMirror.js'
 
 /** Agent settings persist per gateway origin (STORY-602). Tolerates missing/blocked storage. */
 const AGENT_KEY = 'flow:agent:v1'
@@ -93,6 +94,14 @@ export function reducer(state, action) {
     }
     case 'LOADED':
       return { ...state, batches: action.batches }
+    case 'RECONCILED': {
+      // Runs the backend knows that this browser has no batch for (STORY-604), newest first.
+      const patched = (state.batches ?? []).map((b) => {
+        const p = action.patches.find((x) => x.batchId === b.id)
+        return p ? applyPatch(b, p.patch) : b
+      })
+      return { ...state, batches: [...action.add, ...patched] }
+    }
     case 'ERROR':
       return { ...state, error: action.error }
     case 'NOTICE':
@@ -154,10 +163,21 @@ export function useEditorState(projectId) {
 
   useEffect(() => {
     let live = true
-    adapter
-      .listBatches(projectId)
-      .then((batches) => live && dispatch({ type: 'LOADED', batches }))
-      .catch((error) => live && dispatch({ type: 'ERROR', error }))
+    const load = async () => {
+      try {
+        const batches = await adapter.listBatches(projectId)
+        if (!live) return
+        dispatch({ type: 'LOADED', batches })
+        // Runs are the backend's; mirror any this browser hasn't seen (STORY-604).
+        if (adapter.reconcileRuns) {
+          const { add, patches } = await adapter.reconcileRuns(projectId, batches)
+          if (live && (add.length || patches.length)) dispatch({ type: 'RECONCILED', add, patches })
+        }
+      } catch (error) {
+        if (live) dispatch({ type: 'ERROR', error })
+      }
+    }
+    load()
     return () => {
       live = false
     }
@@ -169,14 +189,18 @@ export function useEditorState(projectId) {
   useEffect(() => {
     if (!state.batches) return
     for (const b of state.batches) {
-      if (isPending(b) && !watchers.current.has(b.id)) {
-        const stop = adapter.watch(projectId, b, (patch) => dispatch({ type: 'BATCH_PATCH', batchId: b.id, patch }))
+      // A run batch follows its run (STORY-604); a generate batch follows its jobs.
+      const active = isRunBatch(b) ? isRunActiveBatch(b) : isPending(b)
+      if (active && !watchers.current.has(b.id)) {
+        const onPatch = (patch) => dispatch({ type: 'BATCH_PATCH', batchId: b.id, patch })
+        const stop = isRunBatch(b) ? adapter.watchRun(projectId, b, onPatch) : adapter.watch(projectId, b, onPatch)
         watchers.current.set(b.id, stop)
       }
     }
     for (const [id, stop] of watchers.current) {
       const b = state.batches.find((x) => x.id === id)
-      if (!b || !isPending(b)) {
+      const active = b && (isRunBatch(b) ? isRunActiveBatch(b) : isPending(b))
+      if (!active) {
         stop()
         watchers.current.delete(id)
       }
@@ -230,7 +254,8 @@ export function useEditorState(projectId) {
             values: agent.values,
             autostart: agent.confirm === 'never',
           })
-          dispatch({ type: 'REFERENCE', mediaId: null })
+          const batch = await adapter.mirrorRun(projectId, run)
+          dispatch({ type: 'BATCH_ADD', batch })
           return run
         } catch (e) {
           dispatch({ type: 'NOTICE', notice: e.message ?? String(e) })

@@ -13,6 +13,7 @@ import { MOCK_CAPABILITIES, estimateCost } from './outputSettings.js'
 import { assertCapabilities, buildPendingBatch, findMode, valueByRole, formatCreatedAt, formatProjectTitle, applyPatch, uuid, ContractError } from '../adapter/contract.js'
 import { memoryStore } from '../adapter/store.js'
 import { GatewayError } from '../adapter/http.js'
+import { batchFromRun, makeRunWatcher, reconcileRuns } from '../adapter/runMirror.js'
 
 /** RECON-04 §8: image ×2 batch took EST 20–30s end to end. */
 export const GENERATION_MS = 22000
@@ -29,6 +30,7 @@ export function createMockAdapter({ generationMs = GENERATION_MS, tickMs = TICK_
   const uploads = new Map() // id → { full, thumb, name, kind }
   const pending = new Map() // batchId → { finalAssets, finalResolution, started }
   let genCount = 0
+  const agent = mockAgent({ pool: MOCK_POOL, uuid })
 
   /** Named, not a method: the adapter is often destructured, so `this` is unsafe. */
   async function createProject() {
@@ -140,7 +142,19 @@ export function createMockAdapter({ generationMs = GENERATION_MS, tickMs = TICK_
     estimateCost,
 
     /** Mock agent (v1.1): canned scripts, and a run that advances one step per poll — like the Python fake. */
-    agent: mockAgent({ pool: MOCK_POOL, uuid }),
+    agent,
+
+    async mirrorRun(projectId, run) {
+      const batch = batchFromRun(run, { createdAt: formatCreatedAt(), modelName: caps.name })
+      await db.putBatch(projectId, batch)
+      return batch
+    },
+    async reconcileRuns(projectId, batches) {
+      const out = reconcileRuns(batches, await agent.listRuns(projectId), { createdAt: formatCreatedAt(), deletedRunIds: new Set(await db.forgottenRuns(projectId)), modelName: caps.name })
+      for (const b of out.add) await db.putBatch(projectId, b)
+      return out
+    },
+    watchRun: makeRunWatcher({ fetchRun: (id) => agent.run(id), db, pollMs: tickMs }),
   }
 }
 

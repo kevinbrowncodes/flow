@@ -86,6 +86,15 @@ function DetailsColumn({ batch, onDelete }) {
       {batch.referenceKey && (
         <img className={styles.refThumb} src={adapter.getMediaUrl(batch.referenceKey, 'THUMBNAIL')} alt="Reference" />
       )}
+      {batch.runId && (batch.runStep || batch.runError) && (
+        <div className={styles.meta} data-testid="run-status">
+          {batch.runStep && <span className={styles.metaLine}>{batch.runStep}</span>}
+          {batch.runError && batch.runState !== 'done' && <span className={styles.metaLine}>{batch.runError}</span>}
+          {batch.runState && !['done', 'failed'].includes(batch.runState) && (
+            <span className={styles.metaLine}>Removing this batch does not stop the render.</span>
+          )}
+        </div>
+      )}
       <div className={styles.meta}>
         <span className={styles.metaLine}>Created {batch.createdAt}</span>
         {batch.model && <span className={styles.metaLine}>{batch.model}</span>}

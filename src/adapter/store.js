@@ -11,6 +11,8 @@
  * @property {(projectId: string) => Promise<Object[]>} listBatches
  * @property {(projectId: string, batch: Object) => Promise<void>} putBatch   upsert; new batches go first
  * @property {(projectId: string, batchId: string) => Promise<void>} deleteBatch
+ * @property {(projectId: string, runId: string) => Promise<void>} forgetRun     a run whose batch the user deleted (STORY-604)
+ * @property {(projectId: string) => Promise<string[]>} forgottenRuns
  */
 
 const clone = (v) => JSON.parse(JSON.stringify(v))
@@ -52,8 +54,23 @@ function fromState(read, write) {
     },
     async deleteBatch(projectId, batchId) {
       const s = read()
+      const gone = (s.batches[projectId] ?? []).find((b) => b.id === batchId)
       s.batches[projectId] = (s.batches[projectId] ?? []).filter((b) => b.id !== batchId)
+      // A deleted run batch must not come back on the next reconcile (STORY-604).
+      if (gone?.runId) {
+        s.forgotten ??= {}
+        s.forgotten[projectId] = [...new Set([...(s.forgotten[projectId] ?? []), gone.runId])]
+      }
       write(s)
+    },
+    async forgetRun(projectId, runId) {
+      const s = read()
+      s.forgotten ??= {}
+      s.forgotten[projectId] = [...new Set([...(s.forgotten[projectId] ?? []), runId])]
+      write(s)
+    },
+    async forgottenRuns(projectId) {
+      return clone(read().forgotten?.[projectId] ?? [])
     },
   }
 }

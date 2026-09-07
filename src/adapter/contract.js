@@ -119,6 +119,9 @@
  * @property {(projectId: string, batchId: string) => Promise<void>} deleteBatch
  * @property {(mode: string, values: Object) => number|null} [estimateCost]
  * @property {AgentAdapter} [agent]                                       present iff capabilities.agent (v1.1)
+ * @property {(projectId: string, run: Run) => Promise<Batch>} [mirrorRun]          a run as a batch (STORY-604)
+ * @property {(projectId: string, batches: Batch[]) => Promise<{add: Batch[], patches: Object[]}>} [reconcileRuns]
+ * @property {(projectId: string, batch: Batch, onUpdate: (p: BatchPatch) => void) => () => void} [watchRun]
  *
  * @typedef {Object} AgentCapabilities
  * @property {boolean} instructions

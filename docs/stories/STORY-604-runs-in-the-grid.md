@@ -11,21 +11,21 @@ a run; the grid is where you see its output.
 
 ### Mirroring
 
-- [ ] When a run is created (STORY-602's send) a **batch** is added to the project — `type: video`, `prompt: run.title`, `runId`, one item per clip (`clip_count`), each `status: pending` — prepended like a generate (RECON-04 §8)
-- [ ] The batch's items track the run: `item[i]` mirrors `clips[i]` — `status` (`pending → running → done | failed`), `progress`, and `assetKey = media_id` when done; `batch.resolution` from the run's `values.size` when known
-- [ ] The batch shows the run's **step label** in its details column (`Rendering clip 2 of 6`) while the run is active, and the run's `error` when `paused`/`failed`; on `done` the details read as for any batch
-- [ ] Runs are the source of truth: on project load, `adapter.agent.listRuns(projectId)` reconciles — a run with no batch gets one; a batch whose run has advanced gets patched. A run whose batch was deleted is **not** re-added (the user removed it)
-- [ ] The mirror is driven by one `adapter.watchRun(projectId, run, onUpdate)` per active run, exactly like `watch()` for generates: polls `agent.run(id)`, stops on `done`/`failed`, resumes after a reload for still-active runs
+- [x] When a run is created (STORY-602's send) a **batch** is added to the project — `type: video`, `prompt: run.title`, `runId`, one item per clip (`clip_count`), each `status: pending` — prepended like a generate (RECON-04 §8)
+- [x] The batch's items track the run: `item[i]` mirrors `clips[i]` — `status` (`pending → running → done | failed`), `progress`, and `assetKey = media_id` when done; `batch.resolution` from the run's `values.size` when known
+- [x] The batch shows the run's **step label** in its details column (`Rendering clip 2 of 6`) while the run is active, and the run's `error` when `paused`/`failed`; on `done` the details read as for any batch
+- [x] Runs are the source of truth: on project load, `adapter.agent.listRuns(projectId)` reconciles — a run with no batch gets one; a batch whose run has advanced gets patched. A run whose batch was deleted is **not** re-added (the user removed it)
+- [x] The mirror is driven by one `adapter.watchRun(projectId, run, onUpdate)` per active run, exactly like `watch()` for generates: polls `agent.run(id)`, stops on `done`/`failed`, resumes after a reload for still-active runs
 
 ### Tiles
 
-- [ ] A pending clip whose predecessor is still rendering shows the skeleton with no number; the clip being rendered shows the gateway's percentage; done clips show their poster and play like any video tile
-- [ ] Deleting the batch deletes it from the project only — the run keeps rendering on the backend (there is no cancel), and the batch's details column says so before deletion: *"Removing this batch does not stop the render."*
+- [x] A pending clip whose predecessor is still rendering shows the skeleton with no number; the clip being rendered shows the gateway's percentage; done clips show their poster and play like any video tile
+- [x] Deleting the batch deletes it from the project only — the run keeps rendering on the backend (there is no cancel), and the batch's details column says so before deletion: *"Removing this batch does not stop the render."*
 
 ### State
 
-- [ ] `Batch` gains optional `runId`; `MediaItem` gains optional `clipIndex`. `describeBatch` handles a run batch (title as prompt, values from the run's `values`)
-- [ ] The editor's reducer handles `RUN_UPSERT` (batch mirror patch from a run) alongside `BATCH_PATCH`
+- [x] `Batch` gains optional `runId`; `MediaItem` gains optional `clipIndex`. `describeBatch` handles a run batch (title as prompt, values from the run's `values`)
+- [x] The editor's reducer handles `RUN_UPSERT` (batch mirror patch from a run) alongside `BATCH_PATCH`
 
 ## Deviations from Google
 

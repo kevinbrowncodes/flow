@@ -28,6 +28,7 @@ import {
   TERMINAL,
 } from './contract.js'
 import { localStorageStore, memoryStore } from './store.js'
+import { batchFromRun, makeRunWatcher, reconcileRuns } from './runMirror.js'
 
 const JSON_HEADERS = { 'content-type': 'application/json' }
 
@@ -210,6 +211,26 @@ export function createHttpAdapter({ baseUrl = '', store, pollMs = 1000, fetch: f
     },
 
     estimateCost: () => null,
+
+    /** Mirror a run into the project as a batch and persist it (STORY-604). */
+    async mirrorRun(projectId, run) {
+      const caps = await capabilities()
+      const batch = batchFromRun(run, { createdAt: formatCreatedAt(clock()), modelName: caps.name })
+      await db.putBatch(projectId, batch)
+      return batch
+    },
+
+    /** On load: batches for runs that have none (unless the user deleted them), patches for the rest. */
+    async reconcileRuns(projectId, batches) {
+      const caps = await capabilities()
+      if (!caps.agent) return { add: [], patches: [] }
+      const [runs, forgotten] = await Promise.all([api(projectId ? `/agent/runs?project_id=${encodeURIComponent(projectId)}` : '/agent/runs'), db.forgottenRuns(projectId)])
+      const out = reconcileRuns(batches, runs, { createdAt: formatCreatedAt(clock()), deletedRunIds: new Set(forgotten), modelName: caps.name })
+      for (const b of out.add) await db.putBatch(projectId, b)
+      return out
+    },
+
+    watchRun: makeRunWatcher({ fetchRun: (id) => api(`/agent/runs/${encodeURIComponent(id)}`), db, pollMs }),
 
     /** Agent mode (v1.1): thin wrappers over /flow/agent/*. Only meaningful when capabilities.agent. */
     agent: {
