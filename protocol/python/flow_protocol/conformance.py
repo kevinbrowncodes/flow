@@ -206,12 +206,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--prefix", default="/flow")
     ap.add_argument("--generate", action="store_true", help="also run one real generation and wait for it")
     ap.add_argument("--reference", type=Path, help="image to upload as the reference (default: a tiny PNG)")
-    ap.add_argument("--timeout", type=float, default=900.0)
+    ap.add_argument("--timeout", type=float, default=900.0, help="how long to wait for the job to finish")
+    ap.add_argument("--http-timeout", type=float, default=300.0,
+                    help="per-request timeout; a gateway may take minutes to answer /generate (BUG-002)")
     ap.add_argument("--poll", type=float, default=2.0)
     args = ap.parse_args(argv)
 
     reference = args.reference.read_bytes() if args.reference else None
-    with httpx.Client(base_url=args.base_url, timeout=60.0) as client:
+    with httpx.Client(base_url=args.base_url, timeout=args.http_timeout) as client:
         checks = run_checks(client, prefix=args.prefix, generate=args.generate, reference=reference, timeout=args.timeout, poll=args.poll)
     for c in checks:
         mark = "✓" if c.ok else "✗"
