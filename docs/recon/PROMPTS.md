@@ -526,7 +526,7 @@ Paste results back. I will:
 
 ---
 
-## RECON-10 — Agent mode  ·  🔜 requested 2026-09-07
+## RECON-10 — Agent mode  ·  ✅ 2026-09-07
 
 **Why this one is different.** Every other mission documents *appearance*. This one documents
 *behaviour*: what the agent can be asked, what it answers, and whether it generates on its own.
