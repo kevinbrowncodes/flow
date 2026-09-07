@@ -5,22 +5,32 @@ import Chip from '../../components/Chip/Chip.jsx'
 import { Popover } from '../../components/Popover/Popover.jsx'
 import OutputSettingsPopover from './OutputSettingsPopover.jsx'
 import AssetPickerModal from './AssetPickerModal.jsx'
+import InstructionPicker from '../agent/InstructionPicker.jsx'
+import AgentSettings from '../agent/AgentSettings.jsx'
 import { useAdapter } from '../../adapter/useAdapter.js'
 import { findMode, fieldByRole, valueByRole } from '../../adapter/contract.js'
 import styles from './Composer.module.css'
 
-export default function Composer({ caps, projectId, output, onOutput, onMode, reference, onReference, onGenerate, clearOnSubmit, notice }) {
+export default function Composer({
+  caps, projectId, output, onOutput, onMode, reference, onReference, onGenerate, clearOnSubmit, notice,
+  agent = null, onAgentToggle, onAgentSet, onAgentInstruction, onAgentRun, onAgentExpand,
+}) {
   const adapter = useAdapter()
   const [text, setText] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [agentMenu, setAgentMenu] = useState(null) // 'instructions' | 'settings'
   const inputRef = useRef(null)
 
   const mode = findMode(caps, output.mode)
   const values = output.values[mode.key] ?? {}
   const empty = text.trim().length === 0
-  const needsReference = caps.reference === 'required' && !reference
-  const disabled = empty || needsReference
+  // Agent mode (STORY-602): the skill is the prompt, so text is not required — a seed and a skill are.
+  // A run always needs a seed (the planner reads it), whatever the backend says about plain generates.
+  const agentOn = Boolean(caps.agent && agent?.on)
+  const needsReference = agentOn ? !reference : caps.reference === 'required' && !reference
+  const needsSkill = agentOn && !agent.instruction
+  const disabled = agentOn ? needsReference || needsSkill : empty || needsReference
 
   const chipModel = valueByRole(mode, values, 'model') ?? caps.name
   const chipCount = valueByRole(mode, values, 'count')
@@ -34,6 +44,10 @@ export default function Composer({ caps, projectId, output, onOutput, onMode, re
 
   const submit = async () => {
     if (disabled) return // only an empty prompt disables send (RECON-04 §7) — or a missing required reference
+    if (agentOn) {
+      await onAgentRun()
+      return
+    }
     const ok = await onGenerate(text.trim())
     // Prompt clears after a slight delay, not instantly (RECON-04 §8)
     if (ok && clearOnSubmit) setTimeout(clear, 400)
@@ -47,7 +61,10 @@ export default function Composer({ caps, projectId, output, onOutput, onMode, re
             {notice}
           </div>
         )}
-        <div className={styles.composer} data-testid="composer">
+        <div className={styles.composer} data-testid="composer" data-agent={agentOn ? 'on' : 'off'}>
+          {agentOn && (
+            <IconButton className={styles.expand} icon="open_in_full" label="Expand" iconSize={18} onClick={onAgentExpand} />
+          )}
           <div className={styles.inputScroll}>
             <div
               ref={inputRef}
@@ -71,11 +88,42 @@ export default function Composer({ caps, projectId, output, onOutput, onMode, re
             {caps.reference !== 'none' && (
               <IconButton icon="add" /* V6: add_2 not in the public font */ label="Add assets" onClick={() => setPickerOpen(true)} />
             )}
-            {/* Agent mode is deferred (D6) — renders, stays inert. Only where the backend claims the surface. */}
+            {/* The Agent pill: live when the backend declares capabilities.agent (STORY-602), inert otherwise (D6). */}
             {caps.surfaces.agent && (
-              <Chip aria-pressed="false" style={{ cursor: 'default' }}>
+              <Chip
+                on={agentOn}
+                aria-pressed={agentOn ? 'true' : 'false'}
+                style={caps.agent ? undefined : { cursor: 'default' }}
+                onClick={caps.agent ? onAgentToggle : undefined}
+              >
                 Agent
               </Chip>
+            )}
+            {agentOn && (
+              <>
+                <Popover
+                  open={agentMenu === 'instructions'}
+                  onClose={() => setAgentMenu(null)}
+                  place="up"
+                  trigger={<IconButton icon="description" label="Agent instructions" iconSize={20} onClick={() => setAgentMenu(agentMenu === 'instructions' ? null : 'instructions')} />}
+                >
+                  <InstructionPicker
+                    selected={agent.instruction}
+                    onSelect={(i) => {
+                      onAgentInstruction(i)
+                      setAgentMenu(null)
+                    }}
+                  />
+                </Popover>
+                <Popover
+                  open={agentMenu === 'settings'}
+                  onClose={() => setAgentMenu(null)}
+                  place="up"
+                  trigger={<IconButton icon="tune" label="Agent settings" iconSize={20} onClick={() => setAgentMenu(agentMenu === 'settings' ? null : 'settings')} />}
+                >
+                  <AgentSettings caps={caps} agent={agent} onSet={onAgentSet} onClose={() => setAgentMenu(null)} />
+                </Popover>
+              </>
             )}
             {reference && (
               <button type="button" className={styles.refButton} aria-label="Remove reference" onClick={() => onReference(null)}>
@@ -83,24 +131,28 @@ export default function Composer({ caps, projectId, output, onOutput, onMode, re
               </button>
             )}
             {needsReference && <span className={styles.hint}>Add a reference to start</span>}
+            {!needsReference && needsSkill && <span className={styles.hint}>Pick a skill to start</span>}
             <span className={styles.grow} />
             {!empty && <IconButton icon="close" label="Clear prompt" iconSize={20} onClick={clear} />}
-            <Popover
-              open={settingsOpen}
-              onClose={() => setSettingsOpen(false)}
-              place="up"
-              align="end"
-              trigger={
-                <Chip onClick={() => setSettingsOpen(!settingsOpen)} aria-label="Output settings">
-                  {mode.icon && <span aria-hidden="true">{mode.icon}</span>}
-                  {chipModel}
-                  {hasAspect && <Icon name="crop_16_9" size={14} />}
-                  {chipCount != null && `x${chipCount}`}
-                </Chip>
-              }
-            >
-              <OutputSettingsPopover caps={caps} output={output} onOutput={onOutput} onMode={onMode} cost={cost} />
-            </Popover>
+            {/* The model chip disappears while the agent is on (RECON-04 §7, RECON-10 §1). */}
+            {!agentOn && (
+              <Popover
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                place="up"
+                align="end"
+                trigger={
+                  <Chip onClick={() => setSettingsOpen(!settingsOpen)} aria-label="Output settings">
+                    {mode.icon && <span aria-hidden="true">{mode.icon}</span>}
+                    {chipModel}
+                    {hasAspect && <Icon name="crop_16_9" size={14} />}
+                    {chipCount != null && `x${chipCount}`}
+                  </Chip>
+                }
+              >
+                <OutputSettingsPopover caps={caps} output={output} onOutput={onOutput} onMode={onMode} cost={cost} />
+              </Popover>
+            )}
             <button
               type="button"
               className={[styles.send, disabled ? styles.sendDisabled : ''].filter(Boolean).join(' ')}

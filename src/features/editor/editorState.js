@@ -1,6 +1,42 @@
 import { useEffect, useReducer, useRef, useMemo } from 'react'
 import { useAdapter } from '../../adapter/useAdapter.js'
-import { defaultValues, applyPatch, isPending } from '../../adapter/contract.js'
+import { defaultValues, applyPatch, isPending, findMode, runFields } from '../../adapter/contract.js'
+
+/** Agent settings persist per gateway origin (STORY-602). Tolerates missing/blocked storage. */
+const AGENT_KEY = 'flow:agent:v1'
+export function readAgentSettings(storage = globalThis.localStorage) {
+  try {
+    const raw = storage?.getItem(AGENT_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+export function writeAgentSettings(agent, storage = globalThis.localStorage) {
+  try {
+    storage?.setItem(AGENT_KEY, JSON.stringify({ on: agent.on, instruction: agent.instruction, count: agent.count, confirm: agent.confirm, values: agent.values }))
+  } catch {
+    /* quota / privacy mode */
+  }
+}
+
+/** The agent's initial state from capabilities, overlaid with whatever the user saved. */
+export function seedAgent(caps, saved) {
+  if (!caps.agent) return null
+  const video = findMode(caps, 'video')
+  const values = Object.fromEntries(runFields(caps).map((f) => [f.key, saved?.values?.[f.key] ?? f.default]))
+  const count = Math.min(caps.agent.count.max, Math.max(caps.agent.count.min, Number(saved?.count) || caps.agent.count.default))
+  return {
+    on: Boolean(saved?.on),
+    instruction: saved?.instruction ?? null,
+    lockedCount: false,      // true while a count_locked skill is chosen
+    savedCount: count,       // what to restore when an unlocked skill is chosen again
+    count,
+    confirm: saved?.confirm === 'never' ? 'never' : caps.agent.confirm,
+    values,
+    videoMode: video?.key ?? 'video',
+  }
+}
 
 export const initialState = {
   caps: null, // null = loading capabilities
@@ -20,6 +56,7 @@ export const initialState = {
   },
   output: { mode: null, values: {} }, // values: { [modeKey]: { [fieldKey]: value } } — seeded from capabilities
   reference: null, // media id attached via the asset picker
+  agent: null, // null until capabilities say the backend has an agent (STORY-602)
 }
 
 export function reducer(state, action) {
@@ -31,7 +68,28 @@ export function reducer(state, action) {
         caps,
         error: null,
         output: { mode: caps.default_mode, values: Object.fromEntries(caps.modes.map((m) => [m.key, defaultValues(m)])) },
+        agent: seedAgent(caps, action.savedAgent),
       }
+    }
+    case 'AGENT_TOGGLE':
+      return state.agent ? { ...state, agent: { ...state.agent, on: !state.agent.on }, notice: null } : state
+    case 'AGENT_SET': {
+      // key: 'count' | 'confirm' | 'values' (merged) — count is clamped and ignored while locked
+      if (!state.agent) return state
+      const a = state.agent
+      if (action.key === 'values') return { ...state, agent: { ...a, values: { ...a.values, ...action.value } } }
+      if (action.key === 'count') {
+        if (a.lockedCount) return state
+        const count = Math.min(action.max, Math.max(action.min, Number(action.value) || a.count))
+        return { ...state, agent: { ...a, count, savedCount: count } }
+      }
+      return { ...state, agent: { ...a, [action.key]: action.value } }
+    }
+    case 'AGENT_INSTRUCTION': {
+      // A count_locked skill forces 1; choosing an unlocked one restores the previous count.
+      if (!state.agent) return state
+      const locked = Boolean(action.countLocked)
+      return { ...state, agent: { ...state.agent, instruction: action.id, lockedCount: locked, count: locked ? 1 : state.agent.savedCount } }
     }
     case 'LOADED':
       return { ...state, batches: action.batches }
@@ -82,12 +140,12 @@ export function useEditorState(projectId) {
     stateRef.current = state
   })
 
-  // Capabilities first — they seed the output settings.
+  // Capabilities first — they seed the output settings (and the agent's, from localStorage).
   useEffect(() => {
     let live = true
     adapter
       .capabilities()
-      .then((caps) => live && dispatch({ type: 'CAPS', caps }))
+      .then((caps) => live && dispatch({ type: 'CAPS', caps, savedAgent: readAgentSettings() }))
       .catch((error) => live && dispatch({ type: 'ERROR', error }))
     return () => {
       live = false
@@ -133,6 +191,11 @@ export function useEditorState(projectId) {
     [adapter, projectId],
   )
 
+  // Agent settings follow the user across reloads (STORY-602).
+  useEffect(() => {
+    if (state.agent) writeAgentSettings(state.agent)
+  }, [state.agent])
+
   const actions = useMemo(
     () => ({
       async generate(prompt) {
@@ -149,6 +212,29 @@ export function useEditorState(projectId) {
         } catch (e) {
           dispatch({ type: 'NOTICE', notice: e.message ?? String(e) })
           return false
+        }
+      },
+      /** Agent mode: the skill is the prompt; typed text is not part of a run (STORY-602). */
+      async agentRun() {
+        const { agent, reference } = stateRef.current
+        if (!agent?.instruction) {
+          dispatch({ type: 'NOTICE', notice: 'Pick a skill to start' })
+          return null
+        }
+        try {
+          const run = await adapter.agent.createRun({
+            projectId,
+            referenceId: reference,
+            instruction: agent.instruction,
+            count: agent.count,
+            values: agent.values,
+            autostart: agent.confirm === 'never',
+          })
+          dispatch({ type: 'REFERENCE', mediaId: null })
+          return run
+        } catch (e) {
+          dispatch({ type: 'NOTICE', notice: e.message ?? String(e) })
+          return null
         }
       },
       async deleteBatch(batchId) {

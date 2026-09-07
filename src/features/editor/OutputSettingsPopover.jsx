@@ -21,7 +21,7 @@ function Row({ options, value, onChange, format }) {
   )
 }
 
-function FieldControl({ field, value, onChange }) {
+export function FieldControl({ field, value, onChange }) {
   switch (field.type) {
     case 'choice':
       return <Row options={field.options} value={value} onChange={onChange} format={(o) => formatValue(field, o.value)} />

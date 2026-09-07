@@ -10,30 +10,30 @@ settings; a fourth, the expand icon, opens the panel STORY-603 builds.
 
 ### The pill (RECON-04 §7, RECON-10 §1)
 
-- [ ] Rendered only when `capabilities.agent` is declared (D19); `aria-pressed` reflects the state
-- [ ] OFF: `--tint-fill` background, 15px radius (the existing `Chip`); ON: fills **white** with dark text (`Chip.on`)
-- [ ] ON hides the **model/output chip** and its popover; OFF restores it. Everything reverses exactly
-- [ ] ON shows, in the control row: **"Agent instructions"** (icon `description`) and **"Agent settings"** (icon `tune`) icon buttons; and an **"Expand"** (icon `open_in_full`) icon button at the composer's **top-right**, absent when OFF
-- [ ] The prompt placeholder stays `"What do you want to create?"`; typed text is kept but **not** part of a run — the skill is the prompt (see *Deviations*)
-- [ ] The agent state (on/off, chosen instruction, count, confirm, run values) persists per gateway origin in `localStorage` (`flow:agent:v1`) and survives a reload
+- [x] Rendered only when `capabilities.agent` is declared (D19); `aria-pressed` reflects the state
+- [x] OFF: `--tint-fill` background, 15px radius (the existing `Chip`); ON: fills **white** with dark text (`Chip.on`)
+- [x] ON hides the **model/output chip** and its popover; OFF restores it. Everything reverses exactly
+- [x] ON shows, in the control row: **"Agent instructions"** (icon `description`) and **"Agent settings"** (icon `tune`) icon buttons; and an **"Expand"** (icon `open_in_full`) icon button at the composer's **top-right**, absent when OFF
+- [x] The prompt placeholder stays `"What do you want to create?"`; typed text is kept but **not** part of a run — the skill is the prompt (see *Deviations*)
+- [x] The agent state (on/off, chosen instruction, count, confirm, run values) persists per gateway origin in `localStorage` (`flow:agent:v1`) and survives a reload
 
 ### Instruction picker ("Agent instructions")
 
-- [ ] A popover listing `adapter.agent.instructions()` as radio rows: name, one-line description, and a `1 clip` badge on `count_locked` skills
-- [ ] Choosing a locked skill forces count to 1 and disables the count control; choosing an unlocked one restores the previous count
-- [ ] Read-only — no add/edit/toggle (D22); an empty library shows *"No skills in the library yet"* and the send stays disabled
+- [x] A popover listing `adapter.agent.instructions()` as radio rows: name, one-line description, and a `1 clip` badge on `count_locked` skills
+- [x] Choosing a locked skill forces count to 1 and disables the count control; choosing an unlocked one restores the previous count
+- [x] Read-only — no add/edit/toggle (D22); an empty library shows *"No skills in the library yet"* and the send stays disabled
 
 ### Agent settings ("Agent settings")
 
-- [ ] **Confirm before rendering**: `Always` / `Never` segmented control, defaulting to `capabilities.agent.confirm`
-- [ ] **Clips**: a segmented row from `count.min` to `count.max` when the range is ≤ 8 wide, else a number input; default `count.default`
-- [ ] One control per field in `runFields(caps)` (the video mode's fields the backend listed), rendered with the same `FieldControl` the output-settings popover uses, seeded from the video mode's defaults
-- [ ] A **Save** button closes the popover (values apply live; Save is the affordance Google has — RECON-10)
+- [x] **Confirm before rendering**: `Always` / `Never` segmented control, defaulting to `capabilities.agent.confirm`
+- [x] **Clips**: a segmented row from `count.min` to `count.max` when the range is ≤ 8 wide, else a number input; default `count.default`
+- [x] One control per field in `runFields(caps)` (the video mode's fields the backend listed), rendered with the same `FieldControl` the output-settings popover uses, seeded from the video mode's defaults
+- [x] A **Save** button closes the popover (values apply live; Save is the affordance Google has — RECON-10)
 
 ### Send in agent mode
 
-- [ ] Send is enabled when a reference is attached **and** an instruction is chosen; the composer's `needsReference` hint applies as before, plus *"Pick a skill to start"* when none is chosen
-- [ ] Send calls `adapter.agent.createRun({projectId, referenceId, instruction, count, values, autostart: confirm === 'never'})` and clears the reference like a generate does; a rejection shows as the composer notice. Showing the run is STORY-603/604; this story only creates it
+- [x] Send is enabled when a reference is attached **and** an instruction is chosen; the composer's `needsReference` hint applies as before, plus *"Pick a skill to start"* when none is chosen
+- [x] Send calls `adapter.agent.createRun({projectId, referenceId, instruction, count, values, autostart: confirm === 'never'})` and clears the reference like a generate does; a rejection shows as the composer notice. Showing the run is STORY-603/604; this story only creates it
 
 ## Deviations from Google
 

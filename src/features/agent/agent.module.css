@@ -1,0 +1,68 @@
+/* Agent mode popovers (STORY-602). Structure from RECON-10 §1; geometry EST until a
+   token capture with Agent ON exists (EPIC-003 risk table). */
+
+.radioRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-action);
+  background: transparent;
+  color: var(--text-secondary);
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.radioRow:hover { background: var(--tint-fill); }
+.radioOn { background: var(--tint-line); }
+
+.radioDot {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 2px solid var(--tint-label);
+}
+
+.radioOn .radioDot { border-color: var(--accent-bg); background: var(--accent-bg); box-shadow: inset 0 0 0 3px rgb(22 23 24); }
+
+.radioBody { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.radioName { font-size: 12px; font-weight: 500; line-height: 16px; color: var(--text-primary); }
+.radioDesc { font-size: 11px; font-weight: 400; line-height: 14px; color: var(--text-muted); }
+
+.badge {
+  flex: none;
+  align-self: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--tint-fill);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+}
+
+.empty { padding: 12px; font-size: 12px; color: var(--text-muted); }
+
+.section { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
+.sectionTitle { font-size: 11px; font-weight: 500; line-height: 16px; color: var(--text-label); }
+.hint { font-size: 11px; line-height: 14px; color: var(--text-muted); }
+
+.actions { display: flex; justify-content: flex-end; padding-top: 8px; }
+
+.save {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent-bg);
+  color: var(--accent-fg);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}

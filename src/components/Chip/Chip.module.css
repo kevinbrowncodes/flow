@@ -24,8 +24,10 @@
 
 .chip :global(.material-symbols-outlined) { font-size: 16px; }
 
-/* Agent pill toggled on fills white (RECON-04 §7) — deferred D6, kept for parity. */
-.on {
+/* Agent pill toggled on fills white (RECON-04 §7). Wins over :hover — an ON pill
+   stays white under the pointer; STORY-602's probe caught the hover tint leaking through. */
+.chip.on,
+.chip.on:hover {
   background: var(--accent-bg);
   color: var(--accent-fg);
 }
