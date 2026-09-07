@@ -43,6 +43,8 @@ export const MOCK_CAPABILITIES = {
   },
   // Rendered inert for layout fidelity (D4/D6). Real backends leave these off.
   surfaces: { agent: true, characters: true, scenes: true, tools: true, trash: true },
+  // Agent mode (v1.1): the mock plans canned scripts and renders from the clip pool.
+  agent: { instructions: true, count: { min: 1, max: 6, default: 3 }, confirm: 'always', fields: ['aspect', 'duration'] },
 }
 
 /**

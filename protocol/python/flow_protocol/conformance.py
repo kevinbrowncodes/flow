@@ -20,7 +20,7 @@ from pathlib import Path
 import httpx
 from pydantic import ValidationError
 
-from .models import PROTOCOL_VERSION, Capabilities, Job, MediaAsset
+from .models import PROTOCOL_VERSION, Capabilities, Instruction, Job, MediaAsset, Run
 
 
 @dataclass
@@ -125,6 +125,34 @@ def run_checks(
     if caps.reference == "required":
         resp = client.post(f"{prefix}/generate", json={"mode": mode.key, "prompt": "x", "values": mode.defaults()})
         r.add("POST /generate without required reference → 422", resp.status_code == 422, f"got {resp.status_code}")
+
+    # 5b. agent mode (v1.1): shape and guard checks only — never calls a model or renders
+    if caps.agent is None:
+        resp = client.get(f"{prefix}/agent/instructions")
+        r.add("no agent declared → /agent/instructions absent", resp.status_code == 404, f"got {resp.status_code}; declare capabilities.agent or drop the routes")
+    else:
+        resp = client.get(f"{prefix}/agent/instructions")
+        if r.add("agent: GET /agent/instructions → 200", resp.status_code == 200, f"got {resp.status_code}"):
+            try:
+                instr = [Instruction.model_validate(i) for i in resp.json()]
+                r.add("agent: instructions validate", True, f"{len(instr)} instruction(s)")
+            except (ValidationError, ValueError, TypeError) as e:
+                r.add("agent: instructions validate", False, str(e))
+        resp = client.post(f"{prefix}/agent/plan", json={"reference_id": "x", "instruction": "__nope__", "count": 1})
+        r.add("agent: plan with unknown instruction → 404", resp.status_code == 404, f"got {resp.status_code}")
+        resp = client.post(f"{prefix}/agent/plan", json={"reference_id": "x", "instruction": "__nope__", "count": 0})
+        r.add("agent: plan with count 0 → 422", resp.status_code == 422, f"got {resp.status_code}")
+        resp = client.post(f"{prefix}/agent/runs", json={"reference_id": "x", "instruction": "__nope__", "count": 1})
+        r.add("agent: run with unknown instruction → 404", resp.status_code == 404, f"got {resp.status_code}")
+        resp = client.get(f"{prefix}/agent/runs")
+        if r.add("agent: GET /agent/runs → 200", resp.status_code == 200, f"got {resp.status_code}"):
+            try:
+                runs = [Run.model_validate(x) for x in resp.json()]
+                r.add("agent: runs validate", True, f"{len(runs)} run(s)")
+            except (ValidationError, ValueError, TypeError) as e:
+                r.add("agent: runs validate", False, str(e))
+        resp = client.get(f"{prefix}/agent/runs/does-not-exist")
+        r.add("agent: GET /agent/runs/{unknown} → 404", resp.status_code == 404, f"got {resp.status_code}")
 
     # 6. optional real generation
     if generate:

@@ -4,11 +4,20 @@ Import the models here; the FastAPI router lives in `flow_protocol.router`
 (needs the `server` extra) and the conformance CLI in `flow_protocol.conformance`.
 """
 
-from .gateway import FlowGateway, UpstreamError, normalise_request
+from .gateway import FlowAgent, FlowGateway, UpstreamError, normalise_request
 from .media import MediaStore, kind_of
 from .models import (
     PROTOCOL_VERSION,
+    AgentCapabilities,
     Capabilities,
+    Clip,
+    Instruction,
+    Plan,
+    PlanRequest,
+    Run,
+    RunRequest,
+    RunState,
+    ScriptEdit,
     FieldOption,
     FieldSpec,
     GenerateRequest,
@@ -24,7 +33,17 @@ __version__ = "0.2.0"
 
 __all__ = [
     "PROTOCOL_VERSION",
+    "AgentCapabilities",
     "Capabilities",
+    "Clip",
+    "FlowAgent",
+    "Instruction",
+    "Plan",
+    "PlanRequest",
+    "Run",
+    "RunRequest",
+    "RunState",
+    "ScriptEdit",
     "FieldOption",
     "FieldSpec",
     "FlowGateway",

@@ -126,6 +126,55 @@ broken tile.
 Media ids are opaque strings chosen by the gateway; the reference store uses
 `<root>:<filename>`. They are URL-encoded by the client — avoid `/`.
 
+## Agent mode (v1.1, additive)
+
+A backend that can **plan a scene and render it clip by clip** declares
+`capabilities.agent`; everything below is absent or ignored otherwise, and the
+Agent pill is not rendered. `capabilities.protocol` stays `1`.
+
+```jsonc
+"agent": {
+  "instructions": true,                       // GET /flow/agent/instructions exists
+  "count": { "min": 1, "max": 12, "default": 3 },
+  "confirm": "always",                        // "always" | "never" — the backend's default; the UI may override per run
+  "fields": ["size", "length", "steps"]       // which fields of the VIDEO mode a run carries (a run always renders video)
+}
+```
+
+The shape is deliberately not conversational: **one call writes every script**,
+the user reviews (edits or rewrites single scripts), approves, and the backend
+renders clip 1 from the seed and each later clip from the previous one. Runs
+are the protocol's first backend-owned records — a multi-hour chain must
+outlive a browser tab — and the UI mirrors a run into the project as one batch
+whose items are its clips.
+
+| Route | → | Notes |
+|---|---|---|
+| `GET /flow/agent/instructions` | `[{id, name, description, count_locked}]` | the backend's skill library; `count_locked` = single-clip only |
+| `POST /flow/agent/plan` `{reference_id, instruction, count}` | `{instruction, count, scripts[], titles[], summary, attempts, model}` | pure — renders nothing. 404 unknown instruction/reference, 422 count on a locked skill, 502 with the reason after retries |
+| `POST /flow/agent/runs` `{project_id?, reference_id, instruction, count, values?, autostart?}` | `202 Run` (`planning`) | `values` validated like `/flow/generate`'s; `autostart` skips review |
+| `GET /flow/agent/runs?project_id=` | `Run[]` newest first | |
+| `GET /flow/agent/runs/{id}` | `Run` | 404 unknown |
+| `PATCH /flow/agent/runs/{id}/scripts/{n}` `{text}` | `Run` | 409 unless `review`; 404 bad n |
+| `POST /flow/agent/runs/{id}/scripts/{n}/rewrite` | `Run` | regenerates script n only; 409 unless `review` |
+| `POST /flow/agent/runs/{id}/approve` | `Run` | `review → queued`; 409 otherwise |
+| `POST /flow/agent/runs/{id}/resume` | `Run` | `failed | paused → queued` at the same clip; 409 otherwise |
+
+```jsonc
+// Run
+{ "id": "run_…", "project_id": "…", "title": "🔥 The Reveal",
+  "state": "rendering",              // planning | review | queued | rendering | done | failed | paused
+  "step": "Rendering clip 2 of 3",   // short present-tense label — show it verbatim
+  "clip_index": 1, "clip_count": 3, "instruction": "…", "count": 3, "values": {…}, "reference_id": "in:…",
+  "scripts": ["…", "…", "…"], "titles": ["🔥 The Reveal", "…"], "summary": "…",
+  "clips": [{ "n": 1, "script": "…", "job_id": "…", "media_id": "out:….mp4", "status": "done", "progress": 100, "error": null }, …],
+  "autostart": false, "error": null, "created_at": 1757273400.1, "updated_at": 1757275000.4 }
+```
+
+`paused` is the backend's own gate (memory, a queue) with `error` naming why;
+`resume` retries from the same clip. There is no cancel: a backend that cannot
+stop GPU work must not pretend to.
+
 ## What the gateway does not do
 
 - **Projects and batches** live in the browser (localStorage, namespaced per

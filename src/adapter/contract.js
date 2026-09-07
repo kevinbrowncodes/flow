@@ -118,6 +118,59 @@
  * @property {(projectId: string, batch: Batch, onUpdate: (p: BatchPatch) => void) => () => void} watch
  * @property {(projectId: string, batchId: string) => Promise<void>} deleteBatch
  * @property {(mode: string, values: Object) => number|null} [estimateCost]
+ * @property {AgentAdapter} [agent]                                       present iff capabilities.agent (v1.1)
+ *
+ * @typedef {Object} AgentCapabilities
+ * @property {boolean} instructions
+ * @property {{min: number, max: number, default: number}} count
+ * @property {'always'|'never'} confirm
+ * @property {string[]} fields                  which fields of the default mode a run carries
+ *
+ * @typedef {Object} Instruction
+ * @property {string} id
+ * @property {string} name
+ * @property {string} description
+ * @property {boolean} count_locked
+ *
+ * @typedef {Object} Clip
+ * @property {number} n
+ * @property {string|null} script
+ * @property {string|null} job_id
+ * @property {string|null} media_id
+ * @property {string} status
+ * @property {number|null} progress
+ * @property {string|null} error
+ *
+ * @typedef {Object} Run
+ * @property {string} id
+ * @property {string|null} project_id
+ * @property {string} title
+ * @property {'planning'|'review'|'queued'|'rendering'|'done'|'failed'|'paused'} state
+ * @property {string} step                       a short present-tense label, shown verbatim
+ * @property {number} clip_index
+ * @property {number} clip_count
+ * @property {string} instruction
+ * @property {number} count
+ * @property {Object} values
+ * @property {string} reference_id
+ * @property {string[]} scripts
+ * @property {string[]} titles
+ * @property {string|null} summary
+ * @property {Clip[]} clips
+ * @property {boolean} autostart
+ * @property {string|null} error
+ * @property {number} created_at
+ *
+ * @typedef {Object} AgentAdapter
+ * @property {() => Promise<Instruction[]>} instructions
+ * @property {(req: {referenceId: string, instruction: string, count: number}) => Promise<Object>} plan
+ * @property {(req: {projectId?: string, referenceId: string, instruction: string, count: number, values?: Object, autostart?: boolean}) => Promise<Run>} createRun
+ * @property {(projectId?: string) => Promise<Run[]>} listRuns
+ * @property {(runId: string) => Promise<Run>} run
+ * @property {(runId: string, n: number, text: string) => Promise<Run>} editScript
+ * @property {(runId: string, n: number) => Promise<Run>} rewriteScript
+ * @property {(runId: string) => Promise<Run>} approve
+ * @property {(runId: string) => Promise<Run>} resume
  */
 
 export const PROTOCOL_VERSION = 1
@@ -128,6 +181,9 @@ export const MODE_KEYS = ['image', 'video']
 export const REFERENCE_MODES = ['none', 'optional', 'required']
 export const PROGRESS_MODES = ['percent', 'none']
 export const TERMINAL = new Set(['done', 'failed'])
+export const RUN_STATES = ['planning', 'review', 'queued', 'rendering', 'done', 'failed', 'paused']
+export const RUN_TERMINAL = new Set(['done', 'failed'])
+export const CONFIRM_MODES = ['always', 'never']
 
 export class ContractError extends Error {
   constructor(message) {
@@ -200,6 +256,8 @@ export function assertCapabilities(caps) {
   const progress = caps.progress ?? 'none'
   if (!PROGRESS_MODES.includes(progress)) fail(`progress must be one of ${PROGRESS_MODES.join(', ')}`)
 
+  const agent = normaliseAgent(caps.agent, modes.find((m) => m.key === 'video'))
+
   return {
     ...caps,
     protocol: major,
@@ -210,9 +268,38 @@ export function assertCapabilities(caps) {
     progress,
     credits: Boolean(caps.credits),
     strings: { ...(caps.strings ?? {}) },
-    surfaces: { agent: false, characters: false, scenes: false, tools: false, trash: false, ...(caps.surfaces ?? {}) },
+    // A backend that declares `agent` (v1.1) owns the Agent surface; the legacy inert pill needs surfaces.agent.
+    surfaces: { agent: Boolean(agent), characters: false, scenes: false, tools: false, trash: false, ...(caps.surfaces ?? {}), ...(agent ? { agent: true } : {}) },
+    agent,
   }
 }
+
+/** `capabilities.agent` (v1.1): absent/false → false; an object → validated and defaulted. */
+function normaliseAgent(agent, mode) {
+  if (!agent) return false
+  if (typeof agent !== 'object') fail('agent must be an object or false')
+  if (!mode) fail("agent mode requires a 'video' mode")
+  const count = { min: 1, max: 12, default: 3, ...(agent.count ?? {}) }
+  for (const k of ['min', 'max', 'default']) if (!Number.isInteger(count[k])) fail(`agent.count.${k} must be an integer`)
+  if (count.min < 1) fail('agent.count.min must be at least 1')
+  if (count.default < count.min || count.default > count.max) fail(`agent.count.default ${count.default} is outside [${count.min}, ${count.max}]`)
+  const confirm = agent.confirm ?? 'always'
+  if (!CONFIRM_MODES.includes(confirm)) fail(`agent.confirm must be one of ${CONFIRM_MODES.join(', ')}`)
+  const fields = agent.fields ?? []
+  if (!Array.isArray(fields)) fail('agent.fields must be an array')
+  const known = new Set((mode?.fields ?? []).map((f) => f.key))
+  const unknown = fields.filter((f) => !known.has(f))
+  if (unknown.length) fail(`agent.fields ${JSON.stringify(unknown)} are not fields of the video mode`)
+  return { instructions: agent.instructions ?? true, count, confirm, fields }
+}
+
+/** Which of a run's `values` the UI shows — the video mode's fields the backend listed, in the mode's order. */
+export function runFields(caps) {
+  const mode = caps.agent ? findMode(caps, 'video') : null
+  return mode ? mode.fields.filter((f) => caps.agent.fields.includes(f.key)) : []
+}
+
+export const isRunActive = (run) => !RUN_TERMINAL.has(run.state)
 
 export const findMode = (caps, key) => caps.modes.find((m) => m.key === key) ?? null
 

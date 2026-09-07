@@ -29,6 +29,8 @@ import {
 } from './contract.js'
 import { localStorageStore, memoryStore } from './store.js'
 
+const JSON_HEADERS = { 'content-type': 'application/json' }
+
 export class GatewayError extends Error {
   constructor(status, message) {
     super(message)
@@ -208,5 +210,21 @@ export function createHttpAdapter({ baseUrl = '', store, pollMs = 1000, fetch: f
     },
 
     estimateCost: () => null,
+
+    /** Agent mode (v1.1): thin wrappers over /flow/agent/*. Only meaningful when capabilities.agent. */
+    agent: {
+      instructions: () => api('/agent/instructions'),
+      plan: ({ referenceId, instruction, count }) =>
+        api('/agent/plan', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ reference_id: referenceId, instruction, count }) }),
+      createRun: ({ projectId = null, referenceId, instruction, count, values = {}, autostart = false }) =>
+        api('/agent/runs', { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ project_id: projectId, reference_id: referenceId, instruction, count, values, autostart }) }),
+      listRuns: (projectId) => api(projectId ? `/agent/runs?project_id=${encodeURIComponent(projectId)}` : '/agent/runs'),
+      run: (runId) => api(`/agent/runs/${encodeURIComponent(runId)}`),
+      editScript: (runId, n, text) =>
+        api(`/agent/runs/${encodeURIComponent(runId)}/scripts/${n}`, { method: 'PATCH', headers: JSON_HEADERS, body: JSON.stringify({ text }) }),
+      rewriteScript: (runId, n) => api(`/agent/runs/${encodeURIComponent(runId)}/scripts/${n}/rewrite`, { method: 'POST' }),
+      approve: (runId) => api(`/agent/runs/${encodeURIComponent(runId)}/approve`, { method: 'POST' }),
+      resume: (runId) => api(`/agent/runs/${encodeURIComponent(runId)}/resume`, { method: 'POST' }),
+    },
   }
 }

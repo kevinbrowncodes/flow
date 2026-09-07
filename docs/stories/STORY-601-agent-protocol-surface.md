@@ -11,7 +11,7 @@ routes), so the protocol describes something real rather than something hoped fo
 
 ### Capabilities
 
-- [ ] `capabilities.agent` is optional. Absent or `false` → the Agent pill is not rendered (D19). Present →
+- [x] `capabilities.agent` is optional. Absent or `false` → the Agent pill is not rendered (D19). Present →
   ```jsonc
   "agent": {
     "instructions": true,                       // GET /flow/agent/instructions exists
@@ -20,7 +20,7 @@ routes), so the protocol describes something real rather than something hoped fo
     "fields": ["size", "length", "steps", "sound", "upsample", "reasoner"]   // which mode fields a run carries (a subset of the video mode's fields)
   }
   ```
-- [ ] `assertCapabilities` (JS) and `Capabilities` (pydantic) validate it: `count.min ≥ 1`, `default` inside `[min, max]`, every `fields` entry a real field of the default mode; unknown keys ignored
+- [x] `assertCapabilities` (JS) and `Capabilities` (pydantic) validate it: `count.min ≥ 1`, `default` inside `[min, max]`, every `fields` entry a real field of the default mode; unknown keys ignored
 
 ### Routes (all under the protocol prefix, JSON, `{"detail"}` errors)
 
@@ -36,12 +36,12 @@ routes), so the protocol describes something real rather than something hoped fo
 | `POST /flow/agent/runs/{id}/approve` | `Run` | 409 unless `review` |
 | `POST /flow/agent/runs/{id}/resume` | `Run` | 409 unless `failed` or `paused` |
 
-- [ ] `Run` = `{id, project_id, title, state, step, clip_index, clip_count, instruction, count, values, reference_id, scripts[], titles[], summary, clips: [{n, script, job_id, media_id, status, progress, error}], autostart, error, created_at, updated_at}`; `state ∈ planning | review | queued | rendering | done | failed | paused`; `step` is a short present-tense label the UI shows verbatim
-- [ ] `flow_protocol` ships the pydantic models, a `FlowAgent` ABC (`instructions()`, `plan()`, `create_run()`, `list_runs()`, `run()`, `edit_script()`, `rewrite_script()`, `approve()`, `resume()`), and `build_router` mounts the agent routes **only when the gateway implements `FlowAgent`**
-- [ ] `flow-conformance` gains agent checks that run only when `agent` is declared: instructions shape, plan validation (422/404 paths without calling a model), run lifecycle on a fake, 409 guards
-- [ ] `examples/fake.py` implements `FlowAgent` with a canned planner and a fake chain that advances on each poll, so `npm run dev` and the conformance suite exercise the whole flow without a GPU
-- [ ] `src/adapter/contract.js` gains the `agent.*` adapter methods and the `Run` typedef; `http.js` implements them over the routes; `data/index.js` mirrors the fake
-- [ ] `PROTOCOL.md` documents all of the above under **v1.1 (additive)**; `capabilities.protocol` stays `1`
+- [x] `Run` = `{id, project_id, title, state, step, clip_index, clip_count, instruction, count, values, reference_id, scripts[], titles[], summary, clips: [{n, script, job_id, media_id, status, progress, error}], autostart, error, created_at, updated_at}`; `state ∈ planning | review | queued | rendering | done | failed | paused`; `step` is a short present-tense label the UI shows verbatim
+- [x] `flow_protocol` ships the pydantic models, a `FlowAgent` ABC (`instructions()`, `plan()`, `create_run()`, `list_runs()`, `run()`, `edit_script()`, `rewrite_script()`, `approve()`, `resume()`), and `build_router` mounts the agent routes **only when the gateway implements `FlowAgent`**
+- [x] `flow-conformance` gains agent checks that run only when `agent` is declared: instructions shape, plan validation (422/404 paths without calling a model), run lifecycle on a fake, 409 guards
+- [x] `examples/fake.py` implements `FlowAgent` with a canned planner and a fake chain that advances on each poll, so `npm run dev` and the conformance suite exercise the whole flow without a GPU
+- [x] `src/adapter/contract.js` gains the `agent.*` adapter methods and the `Run` typedef; `http.js` implements them over the routes; `data/index.js` mirrors the fake
+- [x] `PROTOCOL.md` documents all of the above under **v1.1 (additive)**; `capabilities.protocol` stays `1`
 
 ## Deviations / decisions
 

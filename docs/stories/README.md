@@ -17,6 +17,8 @@
 | [STORY-206](STORY-206-composer.md) | Floating composer | ✅ DONE — 460px growth, :focus-within ring, send hover inversion |
 | [STORY-207](STORY-207-empty-state.md) | Empty project state | ✅ DONE — reduced rail + verbatim placeholder |
 | [STORY-208](STORY-208-projects-home.md) | Projects home (`/`) | ✅ DONE — grid, rename, delete, New project, About |
+| **EPIC-003 — Agent mode** | | |
+| [STORY-601](STORY-601-agent-protocol-surface.md) | Agent protocol surface (v1.1) | ✅ DONE — models, `FlowAgent`, router, conformance, fake + mock agents, adapter methods |
 | **Phase 3 — MVP behavior** | | |
 | [STORY-303](STORY-303-output-settings.md) | Output settings popover | ✅ DONE — full matrix, live cost line |
 | [STORY-307](STORY-307-generation-lifecycle.md) | Generation lifecycle | ✅ DONE — prepend, skeleton + %, immediate details, delayed clear |

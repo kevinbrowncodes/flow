@@ -9,8 +9,8 @@ from typing import Literal
 from fastapi import APIRouter, FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
-from .gateway import FlowGateway, UpstreamError, normalise_request
-from .models import Capabilities, GenerateRequest, Job, MediaAsset
+from .gateway import FlowAgent, FlowGateway, UpstreamError, normalise_request
+from .models import Capabilities, GenerateRequest, Instruction, Job, MediaAsset, Plan, PlanRequest, Run, RunRequest, ScriptEdit
 
 
 def build_router(gateway: FlowGateway, prefix: str = "/flow") -> APIRouter:
@@ -61,7 +61,72 @@ def build_router(gateway: FlowGateway, prefix: str = "/flow") -> APIRouter:
             raise HTTPException(404, f"no {type.lower()} for media {media_id!r}")
         return FileResponse(path, media_type=mimetypes.guess_type(path.name)[0] or "application/octet-stream")
 
+    # Agent routes exist iff the gateway both implements FlowAgent AND declares
+    # capabilities.agent — the UI and conformance rely on the two agreeing.
+    if isinstance(gateway, FlowAgent) and gateway.capabilities().agent is not None:
+        _agent_routes(router, gateway)
     return router
+
+
+def _agent_routes(router: APIRouter, agent: FlowAgent) -> None:
+    """Agent mode (v1.1). Mounted only for gateways that implement FlowAgent."""
+
+    def guard(fn, *args):
+        try:
+            return fn(*args)
+        except UpstreamError as e:
+            raise HTTPException(e.status, str(e)) from e
+
+    def found(run: Run | None, run_id: str) -> Run:
+        if run is None:
+            raise HTTPException(404, f"Unknown run {run_id!r}")
+        return run
+
+    @router.get("/agent/instructions", response_model=list[Instruction])
+    def instructions() -> list[Instruction]:
+        return agent.instructions()
+
+    @router.post("/agent/plan", response_model=Plan)
+    async def plan(req: PlanRequest) -> Plan:
+        try:
+            return await agent.plan(req)
+        except UpstreamError as e:
+            raise HTTPException(e.status, str(e)) from e
+
+    @router.post("/agent/runs", response_model=Run, status_code=202)
+    def create_run(req: RunRequest) -> Run:
+        return guard(agent.create_run, req)
+
+    @router.get("/agent/runs", response_model=list[Run])
+    def list_runs(project_id: str | None = None) -> list[Run]:
+        return agent.list_runs(project_id)
+
+    @router.get("/agent/runs/{run_id}", response_model=Run)
+    def get_run(run_id: str) -> Run:
+        return found(agent.run(run_id), run_id)
+
+    @router.patch("/agent/runs/{run_id}/scripts/{n}", response_model=Run)
+    def edit_script(run_id: str, n: int, edit: ScriptEdit) -> Run:
+        found(agent.run(run_id), run_id)
+        return guard(agent.edit_script, run_id, n, edit.text)
+
+    @router.post("/agent/runs/{run_id}/scripts/{n}/rewrite", response_model=Run)
+    async def rewrite_script(run_id: str, n: int) -> Run:
+        found(agent.run(run_id), run_id)
+        try:
+            return await agent.rewrite_script(run_id, n)
+        except UpstreamError as e:
+            raise HTTPException(e.status, str(e)) from e
+
+    @router.post("/agent/runs/{run_id}/approve", response_model=Run)
+    def approve(run_id: str) -> Run:
+        found(agent.run(run_id), run_id)
+        return guard(agent.approve, run_id)
+
+    @router.post("/agent/runs/{run_id}/resume", response_model=Run)
+    def resume(run_id: str) -> Run:
+        found(agent.run(run_id), run_id)
+        return guard(agent.resume, run_id)
 
 
 def mount_ui(app: FastAPI, dist_dir: Path | str, path: str = "/ui") -> None:

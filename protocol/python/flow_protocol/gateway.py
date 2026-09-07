@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .media import kind_of
-from .models import Capabilities, FieldSpec, GenerateRequest, Job, MediaAsset
+from .models import Capabilities, FieldSpec, GenerateRequest, Instruction, Job, MediaAsset, Plan, PlanRequest, Run, RunRequest
 from .thumbs import poster
 
 
@@ -46,6 +46,40 @@ class FlowGateway(ABC):
         if p is None:
             return None
         return p if kind_of(p) == "image" else poster(p)
+
+
+class FlowAgent(ABC):
+    """Agent mode (v1.1). A gateway that also implements this gets the
+    `/flow/agent/*` routes from `build_router`, and must declare
+    `capabilities.agent`. Raise `UpstreamError(msg, status)` for 404/409/422/502."""
+
+    @abstractmethod
+    def instructions(self) -> list[Instruction]: ...
+
+    @abstractmethod
+    async def plan(self, req: PlanRequest) -> Plan:
+        """Pure: write the scripts, render nothing."""
+
+    @abstractmethod
+    def create_run(self, req: RunRequest) -> Run: ...
+
+    @abstractmethod
+    def list_runs(self, project_id: str | None = None) -> list[Run]: ...
+
+    @abstractmethod
+    def run(self, run_id: str) -> Run | None: ...
+
+    @abstractmethod
+    def edit_script(self, run_id: str, n: int, text: str) -> Run: ...
+
+    @abstractmethod
+    async def rewrite_script(self, run_id: str, n: int) -> Run: ...
+
+    @abstractmethod
+    def approve(self, run_id: str) -> Run: ...
+
+    @abstractmethod
+    def resume(self, run_id: str) -> Run: ...
 
 
 def _coerce(field: FieldSpec, value: Any) -> Any:

@@ -9,7 +9,7 @@ import { formatProjectTitle, uuid } from '../../src/adapter/contract.js'
 import { fakeGateway } from './fakeGateway.js'
 
 const httpAdapter = (seed) =>
-  createHttpAdapter({ baseUrl: 'http://gw', store: memoryStore(seed), fetch: fakeGateway() })
+  createHttpAdapter({ baseUrl: 'http://gw', store: memoryStore(seed), fetch: fakeGateway().fetch })
 
 const seed = {
   projects: [
@@ -127,6 +127,6 @@ test('uuid works without crypto.randomUUID (insecure context / Node 18)', () => 
 
 test('adapters report the gateway the About panel shows', async () => {
   assert.equal(httpAdapter(seed).gatewayUrl, 'http://gw')
-  assert.equal(createHttpAdapter({ store: memoryStore(seed), fetch: fakeGateway() }).gatewayUrl, 'same origin')
+  assert.equal(createHttpAdapter({ store: memoryStore(seed), fetch: fakeGateway().fetch }).gatewayUrl, 'same origin')
   assert.match(createMockAdapter().gatewayUrl, /mock/)
 })
