@@ -187,7 +187,9 @@ def run_checks(
                 saw_progress = True
         r.add("job reaches a terminal state", True, f"{job.status}")
         if caps.progress == "percent":
-            r.add("progress moved while running (progress: percent)", saw_progress, "never saw 0 < progress < 100; declare progress: none if the backend can't report it")
+            r.add("progress moved while running (progress: percent)", saw_progress,
+                  "saw an intermediate percentage while the job ran" if saw_progress
+                  else "never saw 0 < progress < 100; declare progress: none if the backend can't report it")
         if not r.add("job finished as done", job.status == "done", job.error or ""):
             return r.checks
         if r.add("done job carries media_id", bool(job.media_id), ""):
