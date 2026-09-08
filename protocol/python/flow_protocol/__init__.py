@@ -6,6 +6,7 @@ Import the models here; the FastAPI router lives in `flow_protocol.router`
 
 from .gateway import FlowAgent, FlowGateway, UpstreamError, normalise_request
 from .media import MediaStore, kind_of
+from .sizing import ASPECT_TOLERANCE, image_dimensions, parse_size, size_for_seed
 from .models import (
     PROTOCOL_VERSION,
     AgentCapabilities,
@@ -29,9 +30,10 @@ from .models import (
     Surfaces,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 __all__ = [
+    "ASPECT_TOLERANCE",
     "PROTOCOL_VERSION",
     "AgentCapabilities",
     "Capabilities",
@@ -58,4 +60,7 @@ __all__ = [
     "UpstreamError",
     "kind_of",
     "normalise_request",
+    "image_dimensions",
+    "parse_size",
+    "size_for_seed",
 ]

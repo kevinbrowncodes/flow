@@ -99,3 +99,11 @@ backend writes every clip's script, the panel shows them for **review**
 tiles in the grid. One-shot, not conversational: see `protocol/PROTOCOL.md`
 §Agent mode and `docs/epics/EPIC-003-agent-mode.md`. The mock adapter and
 `flow-fake-gateway` implement it without a GPU.
+
+**Shape from the seed (v0.2.1).** A backend that conditions on the reference as the first frame
+cannot honour a size of a different shape — it squashes. Such a backend declares
+`agent.shape_from_seed: true` and picks the offered size shaped like the seed at the requested
+pixel budget (`flow_protocol.size_for_seed`, mirrored by `sizeForSeed` in the adapter; both are
+held to `protocol/size-vectors.json`). With that flag set the composer measures the reference's
+thumbnail and shows the size that will actually render before Generate is pressed. Without it
+the UI shows nothing extra, because a preview the backend does not keep would be a lie.

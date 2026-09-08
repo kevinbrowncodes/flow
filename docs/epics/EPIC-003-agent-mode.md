@@ -108,7 +108,11 @@ STORY-601 gives it the protocol-shaped `/flow/agent/*` mirror. LTX declares
 | STORY-603 | The review view: editable scripts, Rewrite, titles, arc summary, Approve, "Writing N scripts…" step | 601 | ✅ |
 | STORY-604 | The run in the grid: N tiles filling in order, step labels, paused/failed/resume, run history | 601, 603 | ✅ |
 | STORY-605 | Conformance for agent mode against the mock (pill states, panel geometry, review flow) | 602–604 | ✅ |
-| STORY-606 | Release **`v0.2.0`** (never tagged for 208, so Agent mode rides along); spark-cosmos3 bumps `FLOW_VERSION` (their STORY_032) | 601–605 | ✅ ready to tag |
+| STORY-606 | Release **`v0.2.0`** (never tagged for 208, so Agent mode rides along); spark-cosmos3 bumps `FLOW_VERSION` (their STORY_032) | 601–605 | ✅ shipped 2026-09-07 |
+| STORY-607 | A clip that has not rendered yet shows its seed instead of a grey tile | 604 | 📝 specced |
+| STORY-608 | The composer shows the size your picture will produce (`agent.shape_from_seed`, `size_for_seed` in both languages, shared vectors) | 602, 604 | ✅ built, ships in `v0.2.1` |
+| BUG-003 | A run waiting for review cannot be acted on from the grid | 603, 604 | 📝 open |
+| BUG-004 | Batch metadata does not follow the run's values | 604 | 📝 open |
 
 Stories land in order; 601 is written against the run model spark-cosmos3's
 STORY_030 lands first, so the protocol describes something that exists.

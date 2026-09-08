@@ -1,6 +1,6 @@
 {
   "name": "@kevinbrowncodes/flow",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Google Flow–style editor UI for local video/image generation backends. One adapter seam; model repos implement the Flow Gateway Protocol.",
   "license": "UNLICENSED",
   "type": "module",

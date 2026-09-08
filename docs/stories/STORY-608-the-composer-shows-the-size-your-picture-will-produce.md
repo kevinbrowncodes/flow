@@ -19,16 +19,18 @@ Reported as: *"the ui display should auto update tho letting me know."*
 
 ## Acceptance Criteria
 
-- [ ] With a reference attached in agent mode, the settings show the size that will actually be
+- [x] With a reference attached in agent mode, the settings show the size that will actually be
       used, not the raw default
-- [ ] It updates when the reference changes, and reverts to the plain default when the
+- [x] It updates when the reference changes, and reverts to the plain default when the
       reference is removed
-- [ ] The change is visible without opening the settings popover — the composer says what shape
+- [x] The change is visible without opening the settings popover — the composer says what shape
       is coming, in the place it already reports the model and count
-- [ ] A gateway that does not reshape (the mock, an LTX-style backend) shows its size unchanged,
+- [x] A gateway that does not reshape (the mock, an LTX-style backend) shows its size unchanged,
       with no new affordance
-- [ ] The displayed size matches what the backend records on the created run, checked in
-      conformance rather than assumed
+- [x] The displayed size matches what the backend records on the created run, checked in
+      conformance rather than assumed — `conform:gateway` attaches a 768x1376 seed to the fake gateway's
+      1280x720 default, reads `720x1280` off the chip, creates the run and finds `720x1280` recorded;
+      spark-cosmos3 STORY_034 repeats it against the real gateway
 
 ## Technical Notes
 
@@ -66,6 +68,13 @@ statement rather than a warning: the correction is the desirable behaviour, not 
   composer, create the run, and assert the run's recorded size equals what was shown. This is
   the check that keeps the two implementations honest against a real backend.
 - **E2E** — not applicable. No render is needed to compare a label with a run record.
+
+## Also found on the way
+
+`tests/gateway.spec.js` had been stale since v0.2.0: it expected the editor at `/ui/` (the
+home page now comes first) and no Agent pill (the fake declares one). All six tests were
+failing before this story touched anything; they pass now. Part B's visual baseline existed
+only for macOS; the first Linux run wrote one and it is committed.
 
 ## Estimated Complexity
 

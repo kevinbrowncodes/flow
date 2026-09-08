@@ -293,7 +293,8 @@ function normaliseAgent(agent, mode) {
   const known = new Set((mode?.fields ?? []).map((f) => f.key))
   const unknown = fields.filter((f) => !known.has(f))
   if (unknown.length) fail(`agent.fields ${JSON.stringify(unknown)} are not fields of the video mode`)
-  return { instructions: agent.instructions ?? true, count, confirm, fields }
+  if (agent.shape_from_seed != null && typeof agent.shape_from_seed !== 'boolean') fail('agent.shape_from_seed must be a boolean')
+  return { instructions: agent.instructions ?? true, count, confirm, fields, shapeFromSeed: Boolean(agent.shape_from_seed) }
 }
 
 /** Which of a run's `values` the UI shows — the video mode's fields the backend listed, in the mode's order. */
@@ -333,6 +334,73 @@ export function aspectFromSize(size) {
     }
   }
   return best
+}
+
+/**
+ * Sizes within this log-aspect distance of the best match count as the same shape, so the two
+ * orientations of one shape compete on pixel count instead. ln(16/9) - ln(4/3) is 0.29.
+ */
+export const ASPECT_TOLERANCE = 0.15
+
+/** '1280x720' → [1280, 720]; anything unparseable or non-positive → null. */
+export function parseSize(size) {
+  const m = /^\s*(\d+)\s*[x×X]\s*(\d+)\s*$/.exec(String(size ?? ''))
+  if (!m) return null
+  const w = Number(m[1])
+  const h = Number(m[2])
+  return w > 0 && h > 0 ? [w, h] : null
+}
+
+/**
+ * The offered size shaped like the seed, at the pixel budget `requested` asked for.
+ *
+ * A gateway that uses the reference as the first frame cannot honour a size of a different
+ * shape — it rescales the frame and the clip comes out squashed — so the shape comes from the
+ * seed and only the resolution from the request. This mirrors `size_for_seed` in
+ * flow_protocol/sizing.py; `protocol/size-vectors.json` holds the cases both must agree on.
+ *
+ * @param {string[]} options sizes the gateway offers
+ * @param {string|null} requested what the caller asked for (often just a UI default)
+ * @param {[number, number]|null} seed the reference's pixel dimensions
+ * @returns {string|null} the size to use, or `requested` when there is nothing to go on
+ */
+export function sizeForSeed(options, requested, seed, tolerance = ASPECT_TOLERANCE) {
+  const sized = (options ?? []).map((o) => [o, parseSize(o)]).filter(([, d]) => d)
+  if (!sized.length || !seed || !(seed[1] > 0)) return requested ?? null
+  const target = Math.log(seed[0] / seed[1])
+  const req = parseSize(requested)
+  const budget = req ? req[0] * req[1] : 0
+  const distance = ([, [w, h]]) => Math.abs(Math.log(w / h) - target)
+  const best = Math.min(...sized.map(distance))
+  const close = sized.filter((entry) => distance(entry) <= best + tolerance)
+  close.sort((a, b) => {
+    const d = Math.abs(a[1][0] * a[1][1] - budget) - Math.abs(b[1][0] * b[1][1] - budget)
+    return d !== 0 ? d : a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0
+  })
+  return close[0][0]
+}
+
+/**
+ * What shape the agent will actually render for this seed, if the backend told us it decides
+ * that (`agent.shape_from_seed`). Returns null when there is nothing to say — no agent, a
+ * backend that does not reshape (the preview would be a lie), no size field, or no
+ * measurement yet — so callers render nothing rather than a guess.
+ *
+ * @param {object} caps normalised capabilities
+ * @param {{values: object, videoMode: string}|null} agent editor agent state
+ * @param {[number, number]|null} seed the reference's pixel dimensions
+ * @returns {{requested: string|null, chosen: string, changed: boolean}|null}
+ */
+export function shapeForSeed(caps, agent, seed) {
+  if (!caps?.agent?.shapeFromSeed || !agent || !seed) return null
+  const mode = findMode(caps, agent.videoMode ?? 'video')
+  const field = mode ? fieldByRole(mode, 'size') : null
+  if (!field?.options?.length) return null
+  const options = field.options.map((o) => String(o.value))
+  const requested = agent.values?.[field.key] ?? field.default ?? null
+  const chosen = sizeForSeed(options, requested == null ? null : String(requested), seed)
+  if (!chosen) return null
+  return { requested: requested == null ? null : String(requested), chosen, changed: chosen !== String(requested) }
 }
 
 /** Display string for a field's value: `8s`, `x2`, an option label, On/Off. */

@@ -57,7 +57,8 @@ def test_run_lifecycle_on_the_fake(client):
     assert r.status_code == 202
     run = r.json()
     rid_run = run["id"]
-    assert run["state"] == "planning" and run["clip_count"] == 2 and run["values"]["size"] == "1280x720"
+    # the seed is tiny_png (8x8, square), so the fake — which reshapes (STORY-608) — records the square size
+    assert run["state"] == "planning" and run["clip_count"] == 2 and run["values"]["size"] == "960x960"
 
     def poll():
         return client.get(f"/flow/agent/runs/{rid_run}").json()

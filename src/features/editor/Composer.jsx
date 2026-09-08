@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Icon from '../../components/Icon/Icon.jsx'
 import IconButton from '../../components/IconButton/IconButton.jsx'
 import Chip from '../../components/Chip/Chip.jsx'
@@ -8,7 +8,7 @@ import AssetPickerModal from './AssetPickerModal.jsx'
 import InstructionPicker from '../agent/InstructionPicker.jsx'
 import AgentSettings from '../agent/AgentSettings.jsx'
 import { useAdapter } from '../../adapter/useAdapter.js'
-import { findMode, fieldByRole, valueByRole } from '../../adapter/contract.js'
+import { findMode, fieldByRole, valueByRole, shapeForSeed } from '../../adapter/contract.js'
 import styles from './Composer.module.css'
 
 export default function Composer({
@@ -31,6 +31,28 @@ export default function Composer({
   const needsReference = agentOn ? !reference : caps.reference === 'required' && !reference
   const needsSkill = agentOn && !agent.instruction
   const disabled = agentOn ? needsReference || needsSkill : empty || needsReference
+
+  // STORY-608: the reference thumbnail keeps the source's aspect, so its natural size tells us
+  // the seed's shape without a protocol change. Only used when the backend says it reshapes.
+  // The measurement is keyed by the reference it came from, so a stale one is simply ignored
+  // rather than cleared with a synchronous setState (which the React Compiler lint flags).
+  const [seed, setSeed] = useState(null) // { ref, dims } | null
+  useEffect(() => {
+    if (!reference || !caps.agent?.shapeFromSeed) return undefined
+    const url = adapter.getMediaUrl(reference, 'THUMBNAIL')
+    if (!url || typeof Image === 'undefined') return undefined
+    let live = true
+    const img = new Image()
+    img.onload = () => {
+      if (live && img.naturalWidth > 0 && img.naturalHeight > 0) setSeed({ ref: reference, dims: [img.naturalWidth, img.naturalHeight] })
+    }
+    img.src = url
+    return () => {
+      live = false
+    }
+  }, [reference, adapter, caps.agent?.shapeFromSeed])
+  const seedDims = seed && seed.ref === reference ? seed.dims : null
+  const shape = agentOn && reference ? shapeForSeed(caps, agent, seedDims) : null
 
   const chipModel = valueByRole(mode, values, 'model') ?? caps.name
   const chipCount = valueByRole(mode, values, 'count')
@@ -129,6 +151,17 @@ export default function Composer({
               <button type="button" className={styles.refButton} aria-label="Remove reference" onClick={() => onReference(null)}>
                 <img className={styles.refChip} src={adapter.getMediaUrl(reference, 'THUMBNAIL')} alt="Reference" />
               </button>
+            )}
+            {shape && (
+              <Chip
+                data-testid="agent-size"
+                aria-label="Clip size"
+                title={shape.changed ? `Shape follows your picture: ${shape.chosen} (asked ${shape.requested})` : `Clip size ${shape.chosen}`}
+                style={{ cursor: 'default' }}
+              >
+                <Icon name="crop_16_9" size={14} />
+                {shape.chosen}
+              </Chip>
             )}
             {needsReference && <span className={styles.hint}>Add a reference to start</span>}
             {!needsReference && needsSkill && <span className={styles.hint}>Pick a skill to start</span>}

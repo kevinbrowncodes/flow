@@ -349,6 +349,9 @@ test.describe('Part D — Agent mode [RECON-04 §7, RECON-10, STORY-602..604]', 
     await dialog.locator('button').filter({ hasText: /ember|jpg|png/i }).first().click()
     await dialog.getByRole('button', { name: 'Add to Prompt' }).click()
     await expect(send).toHaveAttribute('aria-disabled', 'false')
+    // STORY-608: the mock does not declare shape_from_seed, so no size preview may appear —
+    // a preview against a backend that uses the requested size as-is would be a lie.
+    await expect(page.getByTestId('agent-size')).toHaveCount(0)
   })
 
   test('a run: plan → review → rewrite → approve → done in the panel, and as a batch in the grid', async ({ page }) => {

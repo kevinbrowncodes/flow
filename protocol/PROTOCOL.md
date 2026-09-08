@@ -137,6 +137,10 @@ Agent pill is not rendered. `capabilities.protocol` stays `1`.
   "instructions": true,                       // GET /flow/agent/instructions exists
   "count": { "min": 1, "max": 12, "default": 3 },
   "confirm": "always",                        // "always" | "never" — the backend's default; the UI may override per run
+  "shape_from_seed": true,                    // optional, default false: the backend picks the clip's SHAPE from the seed and
+                                              // only the resolution from the requested size (a first-frame-conditioned
+                                              // engine squashes any other shape). When true the UI previews that choice
+                                              // before a render, using the same rule — see protocol/size-vectors.json
   "fields": ["size", "length", "steps"]       // which fields of the VIDEO mode a run carries (a run always renders video)
 }
 ```

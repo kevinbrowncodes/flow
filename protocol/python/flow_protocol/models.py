@@ -131,6 +131,10 @@ class AgentCapabilities(_Model):
     count: AgentCount = AgentCount()
     confirm: ConfirmMode = "always"
     fields: list[str] = []
+    # True when the backend picks the clip's shape from the seed (see sizing.size_for_seed):
+    # the UI may then preview that choice before a render. False (the default) means the
+    # requested size is used as-is, and the UI must not claim otherwise.
+    shape_from_seed: bool = False
 
 
 class Capabilities(_Model):

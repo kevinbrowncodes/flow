@@ -1,0 +1,188 @@
+{
+  "_comment": [
+    "Shared cases for the size-from-seed rule (STORY-608). Both implementations read this file:",
+    "flow_protocol.sizing.size_for_seed (Python) and src/adapter/contract.js sizeForSeed (JS).",
+    "If one side changes behaviour, both suites fail \u2014 that is the point. A preview that",
+    "disagrees with what the gateway does is worse than no preview at all.",
+    "",
+    "The rule: shape comes from the seed, resolution comes from the request. Rank the offered",
+    "sizes by log-aspect distance from the seed, keep everything within `tolerance` of the",
+    "best, then pick whichever of those is closest in pixel count to the requested size."
+  ],
+  "tolerance": 0.15,
+  "sets": {
+    "cosmos3": [
+      "960x960",
+      "1104x832",
+      "832x1104",
+      "1280x720",
+      "720x1280",
+      "640x640",
+      "736x544",
+      "544x736",
+      "832x480",
+      "480x832"
+    ],
+    "one_shape_only": [
+      "1280x720",
+      "640x360"
+    ],
+    "empty": []
+  },
+  "cases": [
+    {
+      "set": "cosmos3",
+      "requested": "720x1280",
+      "seed": [
+        1376,
+        768
+      ],
+      "expected": "1280x720",
+      "why": "the incident: the Flow UI's portrait default against a landscape photo, 2026-09-07"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "832x480",
+      "seed": [
+        768,
+        1376
+      ],
+      "expected": "480x832",
+      "why": "the first incident: the agent's landscape constant against a portrait phone photo"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "720x1280",
+      "seed": [
+        768,
+        1376
+      ],
+      "expected": "720x1280",
+      "why": "already agreeing, left alone"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "832x480",
+      "seed": [
+        1376,
+        768
+      ],
+      "expected": "832x480",
+      "why": "already agreeing at the cheap tier"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "480x832",
+      "seed": [
+        1376,
+        768
+      ],
+      "expected": "832x480",
+      "why": "the tier is held in the other direction too: 399,360 pixels either way"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "832x480",
+      "seed": [
+        1000,
+        1000
+      ],
+      "expected": "640x640",
+      "why": "a square photo picks the square size at the requested tier, not the big one"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "960x960",
+      "seed": [
+        1000,
+        1000
+      ],
+      "expected": "960x960",
+      "why": "a square photo at the larger tier stays there"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "720x1280",
+      "seed": [
+        1024,
+        768
+      ],
+      "expected": "1104x832",
+      "why": "4:3 landscape keeps its shape and its 720-ish budget"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "832x480",
+      "seed": [
+        768,
+        1024
+      ],
+      "expected": "544x736",
+      "why": "4:3 portrait at the cheap tier"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "832x480",
+      "seed": [
+        4000,
+        500
+      ],
+      "expected": "832x480",
+      "why": "an extreme letterbox has no close match; take the nearest rather than failing"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "832x480",
+      "seed": [
+        500,
+        4000
+      ],
+      "expected": "480x832",
+      "why": "the same, portrait"
+    },
+    {
+      "set": "cosmos3",
+      "requested": "832x480",
+      "seed": null,
+      "expected": "832x480",
+      "why": "an unmeasurable seed leaves the request alone"
+    },
+    {
+      "set": "cosmos3",
+      "requested": null,
+      "seed": null,
+      "expected": null,
+      "why": "nothing requested and nothing measured: nothing to say"
+    },
+    {
+      "set": "cosmos3",
+      "requested": null,
+      "seed": [
+        1376,
+        768
+      ],
+      "expected": "832x480",
+      "why": "no budget given, so the smallest matching shape wins"
+    },
+    {
+      "set": "one_shape_only",
+      "requested": "1280x720",
+      "seed": [
+        768,
+        1376
+      ],
+      "expected": "1280x720",
+      "why": "one shape offered: the seed cannot be honoured, so the requested budget decides"
+    },
+    {
+      "set": "empty",
+      "requested": "1280x720",
+      "seed": [
+        1376,
+        768
+      ],
+      "expected": "1280x720",
+      "why": "a gateway that offers no choices leaves the request alone"
+    }
+  ]
+}

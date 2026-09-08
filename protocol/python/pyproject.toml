@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flow-protocol"
-version = "0.2.0"
+version = "0.2.1"
 description = "Flow Gateway Protocol: pydantic models, a FastAPI router and a conformance CLI for backends that host the Flow UI."
 readme = "README.md"
 requires-python = ">=3.11"

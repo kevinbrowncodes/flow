@@ -12,7 +12,7 @@ test('agent capabilities: absent/false → false; object → validated with defa
   assert.equal(assertCapabilities(base()).agent, false)
   assert.equal(assertCapabilities({ ...base(), agent: false }).agent, false)
   const caps = assertCapabilities({ ...base(), agent: { fields: ['length'] } })
-  assert.deepEqual(caps.agent, { instructions: true, count: { min: 1, max: 12, default: 3 }, confirm: 'always', fields: ['length'] })
+  assert.deepEqual(caps.agent, { instructions: true, count: { min: 1, max: 12, default: 3 }, confirm: 'always', fields: ['length'], shapeFromSeed: false })
   assert.equal(caps.surfaces.agent, true, 'declaring agent turns the pill on')
   assert.deepEqual(runFields(caps).map((f) => f.key), ['length'])
   assert.deepEqual(runFields(assertCapabilities(base())), [])

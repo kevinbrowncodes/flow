@@ -18,6 +18,7 @@ import time
 
 from ..gateway import FlowAgent, FlowGateway, UpstreamError, normalise_request
 from ..media import MediaStore
+from ..sizing import image_dimensions, size_for_seed
 from ..models import Capabilities, Clip, GenerateRequest, Instruction, Job, MediaAsset, Plan, PlanRequest, Run, RunRequest
 
 
@@ -73,7 +74,8 @@ class FakeGateway(FlowGateway, FlowAgent):
                 "reference_kinds": ["image"],
                 "progress": "percent",
                 "strings": {"footer": "Fake Nano renders solid colours, so double check it"},
-                "agent": {"instructions": True, "count": {"min": 1, "max": 6, "default": 3}, "confirm": "always", "fields": ["size", "frames", "sound"]} if self.agent_enabled else False,
+                "agent": {"instructions": True, "count": {"min": 1, "max": 6, "default": 3}, "confirm": "always", "fields": ["size", "frames", "sound"],
+                          "shape_from_seed": True} if self.agent_enabled else False,
             }
         )
 
@@ -130,10 +132,20 @@ class FakeGateway(FlowGateway, FlowAgent):
 
     def create_run(self, req: RunRequest) -> Run:
         self._instruction(req.instruction, req.count)
-        if self.store.path(req.reference_id) is None:
+        seed_path = self.store.path(req.reference_id)
+        if seed_path is None:
             raise UpstreamError(f"unknown reference {req.reference_id!r}", 404)
+        # Shape from the seed, resolution from the request (STORY-608) — the same rule the UI
+        # previews, so `shape_from_seed: True` above is a promise this keeps. A size the
+        # gateway does not offer is left alone so it still fails validation below.
+        values = {**req.values}
+        options = ["1280x720", "720x1280", "960x960"]
+        if values.get("size") is None or values["size"] in options:
+            chosen = size_for_seed(options, values.get("size") or "1280x720", image_dimensions(Path(seed_path).read_bytes()))
+            if chosen:
+                values["size"] = chosen
         try:
-            norm = normalise_request(self.capabilities(), GenerateRequest(mode="video", prompt="plan", values={**req.values, "count": 1}, reference_id=req.reference_id))
+            norm = normalise_request(self.capabilities(), GenerateRequest(mode="video", prompt="plan", values={**values, "count": 1}, reference_id=req.reference_id))
         except ValueError as e:
             raise UpstreamError(str(e), 422) from e
         run = Run(
